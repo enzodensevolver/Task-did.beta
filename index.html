@@ -7,111 +7,53 @@
 <!-- Firebase 8 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
 // Config Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
   authDomain: "sua-rotina-em-um-site.firebaseapp.com",
+  databaseURL: "https://sua-rotina-em-um-site-default-rtdb.firebaseio.com/",
   projectId: "sua-rotina-em-um-site",
-  storageBucket: "sua-rotina-em-um-site.firebasestorage.app",
+  storageBucket: "sua-rotina-em-um-site.appspot.com",
   messagingSenderId: "774359583618",
   appId: "1:774359583618:web:3ccf1600d1ab1dc6eadd9b"
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-const db = firebase.firestore();
+const db = firebase.database();
 const ADMIN_EMAIL = "enzo.n.sabino@gmail.com";
 </script>
 
 <style>
 *{box-sizing:border-box;}
-body{
-  margin:0;
-  min-height:100vh;
-  font-family:Arial, sans-serif;
-  background:linear-gradient(135deg,#6366f1,#22c55e);
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-.card{
-  background:white;
-  width:100%;
-  max-width:500px;
-  padding:30px;
-  border-radius:18px;
-  box-shadow:0 20px 40px rgba(0,0,0,.25);
-  text-align:center;
-  animation:fadeIn .5s ease;
-}
-@keyframes fadeIn{
-  from{opacity:0; transform:translateY(20px);}
-  to{opacity:1; transform:translateY(0);}
-}
+body{margin:0;font-family:Arial;background:linear-gradient(135deg,#6366f1,#22c55e);display:flex;justify-content:center;align-items:center;min-height:100vh;}
+.card{background:white;width:100%;max-width:500px;padding:30px;border-radius:18px;box-shadow:0 20px 40px rgba(0,0,0,.25);text-align:center;animation:fadeIn .5s ease;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(20px);}to{opacity:1; transform:translateY(0);}}
 h1,h2,h3{margin:0 0 10px;}
 p{margin:0 0 20px;color:#555;}
-input,select,textarea{
-  width:100%;
-  padding:12px;
-  margin:8px 0;
-  border-radius:8px;
-  border:1px solid #ccc;
-  font-size:15px;
-}
-button{
-  width:100%;
-  padding:12px;
-  margin-top:10px;
-  border:none;
-  border-radius:10px;
-  font-size:16px;
-  cursor:pointer;
-}
+input,select,textarea{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #ccc;font-size:15px;}
+button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:10px;font-size:16px;cursor:pointer;}
 .btn-create{background:#22c55e;color:white;}
 .btn-login{background:#6366f1;color:white;}
 .btn-logout{background:#ef4444;color:white;}
-.task{background:#f0f0f0;margin:5px 0;padding:10px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;}
+.task{background:#f0f0f0;margin:5px 0;padding:10px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;transition:all .3s;}
+.task.completed{background:#22c55e;color:white;transform:scale(1.05);}
 .task button{width:auto;padding:5px 10px;font-size:14px;cursor:pointer;}
 #msg{margin-top:10px;color:#ef4444;}
-.progress-bar{
-  width:100%;
-  background:#ddd;
-  border-radius:10px;
-  overflow:hidden;
-  margin:10px 0;
-  height:20px;
-}
-.progress-fill{
-  height:100%;
-  width:0;
-  background:#22c55e;
-  text-align:right;
-  padding-right:5px;
-  color:white;
-  font-weight:bold;
-  border-radius:10px;
-  transition: width 0.5s ease;
-}
-.badge{
-  display:inline-block;
-  background:#f59e0b;
-  color:white;
-  padding:5px 10px;
-  border-radius:12px;
-  margin:5px 5px 0 0;
-  font-size:12px;
-  animation:pop 0.3s ease;
-}
-@keyframes pop{
-  from{transform:scale(0);}
-  to{transform:scale(1);}
-}
+.progress-bar{width:100%;background:#ddd;border-radius:10px;overflow:hidden;margin:10px 0;height:20px;}
+.progress-fill{height:100%;width:0;background:#22c55e;text-align:right;padding-right:5px;color:white;font-weight:bold;border-radius:10px;transition: width 0.8s ease;}
+.badge{display:inline-block;background:#f59e0b;color:white;padding:5px 10px;border-radius:12px;margin:5px 5px 0 0;font-size:12px;animation:pop 0.3s ease;}
+@keyframes pop{from{transform:scale(0);}to{transform:scale(1);}}
 </style>
 </head>
-
 <body>
+
+<!-- SONS -->
+<audio id="xpSound" src="https://freesound.org/data/previews/342/342756_3248244-lq.mp3"></audio>
+<audio id="levelSound" src="https://freesound.org/data/previews/335/335908_3248244-lq.mp3"></audio>
+<audio id="badgeSound" src="https://freesound.org/data/previews/331/331912_3248244-lq.mp3"></audio>
 
 <!-- LOGIN -->
 <div class="card" id="loginCard">
@@ -133,7 +75,7 @@ button{
 <!-- DASHBOARD -->
 <div class="card" id="dashboardCard" style="display:none;">
 <h2 id="titleDash"></h2>
-<div class="reward" id="levelReward"></div>
+<div id="levelReward"></div>
 <div class="progress-bar"><div class="progress-fill" id="xpBar">0 XP</div></div>
 <div id="tasks"></div>
 <h3>Badges:</h3>
@@ -154,7 +96,7 @@ button{
 </div>
 
 <script>
-// Textos
+// TEXTOS
 const texts = {
   pt:{title:"🎯 Meu Progresso",level:"Nível",xp:"XP",complete:"Concluído! +XP"},
   en:{title:"🎯 My Progress",level:"Level",xp:"XP",complete:"Completed! +XP"},
@@ -176,24 +118,31 @@ const xpBar = document.getElementById("xpBar");
 const titleDash = document.getElementById("titleDash");
 const badgesDiv = document.getElementById("badges");
 const userList = document.getElementById("userList");
+const xpSound = document.getElementById("xpSound");
+const levelSound = document.getElementById("levelSound");
+const badgeSound = document.getElementById("badgeSound");
 
-let userId, userData, currentLang="pt", globalTasks = [];
+let userId, userData;
 
 // ----------------- AUTH -----------------
 auth.onAuthStateChanged(user=>{
   if(!user){ showLogin(); }
   else{
     userId = user.uid;
-    db.collection("users").doc(userId).get().then(doc=>{
-      userData = doc.data();
-      currentLang = userData.lang || "pt";
+    db.ref("users/"+userId).once("value").then(snapshot=>{
+      userData = snapshot.val();
+      if(!userData){ // primeiro login
+        const role = emailInput.value === ADMIN_EMAIL ? "admin" : "user";
+        userData = {name:nameInput.value,xp:0,level:1,lang:langSelect.value,role:role,tasks:[],badges:[]};
+        db.ref("users/"+userId).set(userData);
+      }
       if(userData.role==="admin"){ showAdmin(); loadAdminData(); }
-      else{ showDashboard(); loadGlobalTasks(); }
+      else{ showDashboard(); updateDashboardUI(); }
     });
   }
 });
 
-// ----------------- SHOW SECTIONS -----------------
+// ----------------- SHOW -----------------
 function showLogin(){ loginCard.style.display="block"; dashboardCard.style.display="none"; adminCard.style.display="none"; }
 function showDashboard(){ loginCard.style.display="none"; dashboardCard.style.display="block"; adminCard.style.display="none"; }
 function showAdmin(){ loginCard.style.display="none"; dashboardCard.style.display="none"; adminCard.style.display="block"; }
@@ -209,11 +158,11 @@ function register(){
   auth.createUserWithEmailAndPassword(email,password)
   .then(cred=>{
     const role = email===ADMIN_EMAIL?"admin":"user";
-    return db.collection("users").doc(cred.user.uid).set({name,email,xp:0,level:1,lang,role,tasks:[],badges:[]}).then(()=>role);
-  })
-  .then(role=>{
+    userId = cred.user.uid;
+    userData = {name,email,xp:0,level:1,lang,role,tasks:[],badges:[]};
+    db.ref("users/"+userId).set(userData);
     if(role==="admin"){ showAdmin(); loadAdminData(); }
-    else{ showDashboard(); loadGlobalTasks(); }
+    else{ showDashboard(); updateDashboardUI(); }
   })
   .catch(e=>msg.innerText=e.message);
 }
@@ -224,27 +173,20 @@ function login(){
   if(!email || !password){ msg.innerText="Preencha todos os campos!"; return; }
 
   auth.signInWithEmailAndPassword(email,password)
-  .then(cred=>db.collection("users").doc(cred.user.uid).get())
-  .then(doc=>{
-    userData = doc.data();
-    currentLang = userData.lang || "pt";
-    if(userData.role==="admin"){ showAdmin(); loadAdminData(); }
-    else{ showDashboard(); loadGlobalTasks(); }
+  .then(cred=>{
+    userId = cred.user.uid;
+    db.ref("users/"+userId).once("value").then(snapshot=>{
+      userData = snapshot.val();
+      if(userData.role==="admin"){ showAdmin(); loadAdminData(); }
+      else{ showDashboard(); updateDashboardUI(); }
+    });
   })
   .catch(e=>msg.innerText=e.message);
 }
 
 // ----------------- DASHBOARD -----------------
-function loadGlobalTasks(){
-  db.collection("globalTasks").onSnapshot(snap=>{
-    globalTasks = [];
-    snap.forEach(doc=>{ let t=doc.data(); t.id=doc.id; globalTasks.push(t); });
-    updateDashboardUI();
-  });
-}
-
 function updateDashboardUI(){
-  const t = texts[currentLang];
+  const t = texts[userData.lang||"pt"];
   titleDash.innerText = t.title;
   levelReward.innerText = `${t.level}: ${userData.level}`;
   const percent = (userData.xp % 100);
@@ -252,57 +194,47 @@ function updateDashboardUI(){
   xpBar.innerText = userData.xp + " XP";
 
   taskList.innerHTML="";
-
-  // tarefas pessoais
-  if(userData.tasks) userData.tasks.forEach((task,i)=>{
+  if(userData.tasks.length===0){ taskList.innerHTML="<p>Nenhuma tarefa disponível.</p>"; }
+  userData.tasks.forEach((task,i)=>{
     const div=document.createElement("div");
     div.className="task";
-    div.innerHTML=`<span>${task.name} (XP:${task.xp})</span><button onclick="completeUserTask(${i})">✅</button>`;
+    div.innerHTML=`<span>${task.name} (XP:${task.xp})</span><button onclick="completeTask(${i})">✅</button>`;
     taskList.appendChild(div);
   });
 
-  // desafios globais
-  globalTasks.forEach(task=>{
-    const div=document.createElement("div");
-    div.className="task";
-    div.innerHTML=`<span>${task.name} (XP:${task.xp})</span><button onclick="completeGlobalTask('${task.id}',${task.xp})">✅</button>`;
-    taskList.appendChild(div);
-  });
-
-  if((!userData.tasks || userData.tasks.length===0) && globalTasks.length===0){
-    taskList.innerHTML="<p>Nenhuma tarefa disponível.</p>";
-  }
-
-  // badges
   badgesDiv.innerHTML="";
-  if(userData.badges) userData.badges.forEach(b=>{ const span=document.createElement("span"); span.className="badge"; span.innerText=b; badgesDiv.appendChild(span); });
+  userData.badges.forEach(b=>{ const span=document.createElement("span"); span.className="badge"; span.innerText=b; badgesDiv.appendChild(span); });
 }
 
-function completeUserTask(index){
-  const task = userData.tasks[index];
+// ----------------- COMPLETE TASK -----------------
+function completeTask(i){
+  const task = userData.tasks[i];
+  xpSound.play();
   userData.xp += task.xp;
-  if(userData.xp>=100){ userData.xp-=100; userData.level++; userData.badges.push("🏆 Novo nível!"); }
-  userData.tasks.splice(index,1);
-  db.collection("users").doc(userId).update({xp:userData.xp,level:userData.level,tasks:userData.tasks,badges:userData.badges});
+  let leveledUp = false;
+  if(userData.xp >= 100){
+    userData.xp -= 100;
+    userData.level++;
+    userData.badges.push("🏆 Novo nível!");
+    levelSound.play();
+    badgeSound.play();
+    leveledUp = true;
+  }
+  userData.tasks.splice(i,1);
+  db.ref("users/"+userId).set(userData);
   updateDashboardUI();
-  alert(`${texts[currentLang].complete} +${task.xp} XP`);
-}
-
-function completeGlobalTask(taskId,xp){
-  userData.xp += xp;
-  if(userData.xp>=100){ userData.xp-=100; userData.level++; userData.badges.push("🏆 Novo nível!"); }
-  db.collection("users").doc(userId).update({xp:userData.xp,level:userData.level,badges:userData.badges});
-  updateDashboardUI();
-  alert(`${texts[currentLang].complete} +${xp} XP`);
+  const taskDiv = taskList.children[i];
+  taskDiv.classList.add("completed");
+  setTimeout(()=>{ if(leveledUp) alert("🎉 Parabéns! Você subiu de nível e ganhou um badge!"); },300);
 }
 
 // ----------------- ADMIN -----------------
 function loadAdminData(){
-  db.collection("users").onSnapshot(snap=>{
+  db.ref("users").on("value",snapshot=>{
     userList.innerHTML="";
-    snap.forEach(doc=>{
-      const u=doc.data();
-      const li=document.createElement("li");
+    snapshot.forEach(child=>{
+      const u = child.val();
+      const li = document.createElement("li");
       li.innerText=`${u.name} - XP:${u.xp} - Lv:${u.level}`;
       userList.appendChild(li);
     });
@@ -313,14 +245,20 @@ function createGlobalTask(){
   const name=document.getElementById("adminTaskName").value.trim();
   const xp=parseInt(document.getElementById("adminTaskXP").value);
   if(!name || isNaN(xp)){ alert("Preencha nome e XP!"); return; }
-  db.collection("globalTasks").add({name,xp});
+  db.ref("users").once("value").then(snapshot=>{
+    snapshot.forEach(child=>{
+      const u = child.val();
+      u.tasks.push({name,xp});
+      db.ref("users/"+child.key).set(u);
+    });
+  });
   document.getElementById("adminTaskName").value="";
   document.getElementById("adminTaskXP").value="";
 }
 
 // ----------------- LOGOUT -----------------
 function logout(){ auth.signOut().then(showLogin); }
-
 </script>
+
 </body>
 </html>
