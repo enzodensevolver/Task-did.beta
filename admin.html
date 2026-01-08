@@ -9,7 +9,6 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
 <script>
-// Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
   authDomain: "sua-rotina-em-um-site.firebaseapp.com",
@@ -35,7 +34,7 @@ input{padding:5px;margin:5px;border-radius:5px;border:1px solid #ccc;}
 </head>
 
 <body>
-<h2>👑 Painel Admin Personalizável</h2>
+<h2 id="title">👑 Painel Admin</h2>
 
 <div class="card">
   <h3>Adicionar Desafio Global</h3>
@@ -60,20 +59,20 @@ auth.onAuthStateChanged(user=>{
   if(!user){location="index.html";return;}
   currentUser = user;
   db.collection("users").doc(user.uid).get().then(doc=>{
-    if(doc.data().role!=="admin"){alert("Acesso negado!"); location="dashboard.html";}
+    const uData = doc.data();
+    if(uData.role!=="admin"){alert("Acesso negado!"); location="dashboard.html";}
+    // idioma automático
+    document.getElementById("title").innerText = uData.lang==="en"?"👑 Admin Panel": uData.lang==="es"?"👑 Panel Admin":"👑 Painel Admin";
     initAdmin();
   });
 });
 
-// Inicializa painel admin
 function initAdmin(){
   loadGlobalTasks();
   loadUsers();
 }
 
-// =====================
 // DESAFIOS GLOBAIS
-// =====================
 function loadGlobalTasks(){
   db.collection("globalTasks").onSnapshot(snap=>{
     const list = document.getElementById("globalTasksList");
@@ -100,7 +99,6 @@ function addGlobalTask(){
   document.getElementById("globalTaskXP").value="";
 }
 
-// Edita desafio global
 function editGlobalTask(id){
   db.collection("globalTasks").doc(id).get().then(doc=>{
     const name = prompt("Editar nome:",doc.data().name);
@@ -111,16 +109,13 @@ function editGlobalTask(id){
   });
 }
 
-// Deleta desafio global
 function deleteGlobalTask(id){
   if(confirm("Deseja deletar este desafio global?")){
     db.collection("globalTasks").doc(id).delete();
   }
 }
 
-// =====================
 // USUÁRIOS
-// =====================
 function loadUsers(){
   db.collection("users").onSnapshot(snap=>{
     const list = document.getElementById("usersList");
@@ -137,7 +132,6 @@ function loadUsers(){
   });
 }
 
-// Visualizar tarefas do usuário
 function viewUserTasks(uid){
   db.collection("users").doc(uid).get().then(doc=>{
     const user = doc.data();
