@@ -81,9 +81,9 @@ button{
 <script>
 // Textos por idioma
 const texts = {
-  pt:{title:"🎯 Dashboard Personalizável",level:"Nível",xp:"XP",complete:"Concluído! +XP"},
-  en:{title:"🎯 Custom Dashboard",level:"Level",xp:"XP",complete:"Completed! +XP"},
-  es:{title:"🎯 Panel Personalizable",level:"Nivel",xp:"XP",complete:"¡Completado! +XP"}
+  pt:{title:"🎯 Meu Progresso",level:"Nível",xp:"XP",complete:"Concluído! +XP"},
+  en:{title:"🎯 My Progress",level:"Level",xp:"XP",complete:"Completed! +XP"},
+  es:{title:"🎯 Mi Progreso",level:"Nivel",xp:"XP",complete:"¡Completado! +XP"}
 };
 
 let userId, userData, currentLang="pt";
@@ -91,18 +91,34 @@ const taskList = document.getElementById("tasks");
 const levelReward = document.getElementById("levelReward");
 const xpReward = document.getElementById("xpReward");
 
+let globalTasks = []; // desafios do admin
+
 // Verifica login
 auth.onAuthStateChanged(user=>{
   if(!user){window.location="index.html";return;}
   userId = user.uid;
-  loadData();
+  loadUserData();
+  loadGlobalTasks();
 });
 
 // Carrega dados do usuário
-function loadData(){
+function loadUserData(){
   db.collection("users").doc(userId).get().then(doc=>{
     userData = doc.data();
     currentLang = userData.lang || "pt"; // idioma automático
+    updateUI();
+  });
+}
+
+// Carrega desafios globais do admin
+function loadGlobalTasks(){
+  db.collection("globalTasks").onSnapshot(snap=>{
+    globalTasks = [];
+    snap.forEach(doc=>{
+      const t = doc.data();
+      t.id = doc.id;
+      globalTasks.push(t);
+    });
     updateUI();
   });
 }
@@ -114,29 +130,52 @@ function updateUI(){
   levelReward.innerText = `${t.level}: ${userData.level}`;
   xpReward.innerText = `${t.xp}: ${userData.xp}`;
 
-  // Lista de tarefas
   taskList.innerHTML="";
+
+  // Tarefas do usuário
   if(userData.tasks && userData.tasks.length>0){
     userData.tasks.forEach((task,i)=>{
       const div = document.createElement("div");
       div.className="task";
       div.innerHTML=`<span>${task.name} (XP:${task.xp})</span>
-        <button onclick="completeTask(${i})">✅</button>`;
+        <button onclick="completeUserTask(${i})">✅</button>`;
       taskList.appendChild(div);
     });
-  } else {
+  }
+
+  // Desafios globais do admin
+  if(globalTasks.length>0){
+    globalTasks.forEach((task)=>{
+      const div = document.createElement("div");
+      div.className="task";
+      div.innerHTML=`<span>${task.name} (XP:${task.xp})</span>
+        <button onclick="completeGlobalTask('${task.id}',${task.xp})">✅</button>`;
+      taskList.appendChild(div);
+    });
+  }
+
+  if((!userData.tasks || userData.tasks.length===0) && globalTasks.length===0){
     taskList.innerHTML="<p>Nenhuma tarefa disponível.</p>";
   }
 }
 
-// Completa tarefa
-function completeTask(index){
+// Completa tarefa pessoal
+function completeUserTask(index){
   const task = userData.tasks[index];
   userData.xp += task.xp;
   if(userData.xp >=100){ userData.xp -=100; userData.level++; }
   userData.tasks.splice(index,1);
   db.collection("users").doc(userId).update({xp:userData.xp,level:userData.level,tasks:userData.tasks});
   alert(`${texts[currentLang].complete} +${task.xp} XP`);
+  updateUI();
+}
+
+// Completa desafio global
+function completeGlobalTask(taskId,xp){
+  userData.xp += xp;
+  if(userData.xp >=100){ userData.xp -=100; userData.level++; }
+  db.collection("users").doc(userId).update({xp:userData.xp,level:userData.level});
+  alert(`${texts[currentLang].complete} +${xp} XP`);
   updateUI();
 }
 
