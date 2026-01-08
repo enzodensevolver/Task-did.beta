@@ -4,77 +4,159 @@
 <meta charset="UTF-8">
 <title>Minha Rotina</title>
 
+<!-- Firebase v8 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
+<style>
+*{box-sizing:border-box}
+
+body{
+margin:0;
+font-family:'Segoe UI',Arial;
+background:linear-gradient(135deg,#6366f1,#22c55e);
+min-height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+#app{
+background:#fff;
+padding:30px;
+border-radius:20px;
+width:100%;
+max-width:380px;
+text-align:center;
+box-shadow:0 20px 40px rgba(0,0,0,.25);
+animation:fade .6s;
+}
+
+@keyframes fade{
+from{opacity:0;transform:scale(.95)}
+to{opacity:1}
+}
+
+input{
+width:100%;
+padding:12px;
+margin:8px 0;
+border-radius:10px;
+border:1px solid #ddd;
+font-size:15px;
+}
+
+button{
+width:100%;
+padding:12px;
+border:none;
+border-radius:10px;
+margin-top:8px;
+font-size:15px;
+cursor:pointer;
+transition:.3s;
+}
+
+button:hover{transform:scale(1.05)}
+
+.btn-green{background:#22c55e;color:#fff}
+.btn-blue{background:#6366f1;color:#fff}
+
+.lang{
+display:flex;
+justify-content:space-between;
+margin-bottom:10px;
+}
+
+.lang button{
+width:32%;
+background:#f1f5f9;
+font-size:14px;
+}
+</style>
+
 <script>
 const firebaseConfig = {
   apiKey: "SUA_API_KEY",
-  authDomain: "SEU_DOMINIO.firebaseapp.com",
-  projectId: "SEU_PROJECT_ID"
+  authDomain: "SEU_PROJETO.firebaseapp.com",
+  projectId: "SEU_PROJETO"
 };
+
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 </script>
 </head>
 
-<body style="margin:0;font-family:Arial;
-background:linear-gradient(135deg,#38bdf8,#22c55e);
-min-height:100vh;display:flex;align-items:center;justify-content:center;">
+<body>
 
-<div id="app" style="background:#fff;padding:25px;border-radius:15px;
-width:100%;max-width:360px;text-align:center">
+<div id="app">
 
-<h2 id="title">🌟 Bem-vindo</h2>
-
-<div>
+<div class="lang">
 <button onclick="setLang('pt')">🇧🇷</button>
 <button onclick="setLang('en')">🇺🇸</button>
 <button onclick="setLang('es')">🇪🇸</button>
 </div>
 
-<input id="name" placeholder="Nome" style="width:100%;margin:8px 0">
-<input id="email" placeholder="Email" style="width:100%;margin:8px 0">
-<input id="password" type="password" placeholder="Senha" style="width:100%;margin:8px 0">
+<h2 id="title">🌟 Bem-vindo</h2>
 
-<button onclick="register()" id="btnRegister">Criar conta</button>
-<button onclick="login()" id="btnLogin">Entrar</button>
+<input id="name" placeholder="Nome">
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Senha">
+
+<button class="btn-green" id="btnRegister" onclick="register()">Criar conta</button>
+<button class="btn-blue" id="btnLogin" onclick="login()">Entrar</button>
 
 <p id="msg" style="color:red"></p>
+
 </div>
 
 <script>
-const t={
+let currentLang="pt";
+
+const texts={
 pt:{title:"🌟 Bem-vindo",name:"Nome",password:"Senha",register:"Criar conta",login:"Entrar"},
 en:{title:"🌟 Welcome",name:"Name",password:"Password",register:"Create account",login:"Login"},
 es:{title:"🌟 Bienvenido",name:"Nombre",password:"Contraseña",register:"Crear cuenta",login:"Entrar"}
 };
 
 function setLang(l){
-title.innerText=t[l].title;
-name.placeholder=t[l].name;
-password.placeholder=t[l].password;
-btnRegister.innerText=t[l].register;
-btnLogin.innerText=t[l].login;
+currentLang=l;
+title.innerText=texts[l].title;
+name.placeholder=texts[l].name;
+password.placeholder=texts[l].password;
+btnRegister.innerText=texts[l].register;
+btnLogin.innerText=texts[l].login;
 }
 
 function register(){
 auth.createUserWithEmailAndPassword(email.value,password.value)
 .then(c=>{
 db.collection("users").doc(c.user.uid).set({
-name:name.value,xp:0,level:1
+name:name.value,
+email:email.value,
+lang:currentLang,
+xp:0,
+level:1
 });
-location.href="dashboard.html";
-}).catch(e=>msg.innerText=e.message);
+document.getElementById("app").innerHTML="<h2>🎉 Conta criada!</h2>";
+})
+.catch(e=>msg.innerText=e.message);
 }
 
 function login(){
 auth.signInWithEmailAndPassword(email.value,password.value)
-.then(()=>location.href="dashboard.html")
+.then(()=>{
+db.collection("users").doc(auth.currentUser.uid).get()
+.then(doc=>{
+setLang(doc.data().lang || "pt");
+document.getElementById("app").innerHTML="<h2>✅ Login realizado!</h2>";
+});
+})
 .catch(e=>msg.innerText=e.message);
 }
 </script>
+
 </body>
 </html>
