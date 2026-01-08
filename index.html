@@ -27,6 +27,7 @@ const ADMIN_EMAIL = "enzo.n.sabino@gmail.com";
 </script>
 
 <style>
+/* Seu CSS permanece o mesmo */
 *{box-sizing:border-box;}
 body{margin:0;font-family:Arial;background:linear-gradient(135deg,#6366f1,#22c55e);display:flex;justify-content:center;align-items:center;min-height:100vh;}
 .card{background:white;width:100%;max-width:500px;padding:30px;border-radius:18px;box-shadow:0 20px 40px rgba(0,0,0,.25);text-align:center;animation:fadeIn .5s ease;}
@@ -123,13 +124,13 @@ auth.onAuthStateChanged(user=>{
     db.ref("users/"+userId).once("value").then(snapshot=>{
       userData = snapshot.val();
       if(!userData){ // primeiro login
-        const role = emailInput.value === ADMIN_EMAIL ? "admin" : "user";
-        userData = {name:nameInput.value,xp:0,level:1,lang:langSelect.value,role:role,tasks:[],badges:[]};
+        const role = user.email === ADMIN_EMAIL ? "admin" : "user";
+        userData = {name:nameInput.value||user.email,xp:0,level:1,lang:langSelect.value,role:role,tasks:[],badges:[]};
         db.ref("users/"+userId).set(userData);
       }
       if(userData.role==="admin"){ showAdmin(); loadAdminData(); }
       else{ showDashboard(); updateDashboardUI(); }
-    });
+    }).catch(e=>{ msg.innerText = "Erro ao carregar dados: "+e.message; });
   }
 });
 
@@ -170,7 +171,7 @@ function login(){
       userData = snapshot.val();
       if(userData.role==="admin"){ showAdmin(); loadAdminData(); }
       else{ showDashboard(); updateDashboardUI(); }
-    });
+    }).catch(e=>msg.innerText = "Erro ao carregar dados: "+e.message);
   })
   .catch(e=>msg.innerText=e.message);
 }
@@ -224,7 +225,6 @@ function createGlobalTask(){
   const name=document.getElementById("adminTaskName").value.trim();
   const xp=parseInt(document.getElementById("adminTaskXP").value);
   if(!name || isNaN(xp)){ alert("Preencha nome e XP!"); return; }
-  // adicionar como tarefa para todos os usuários
   db.ref("users").once("value").then(snapshot=>{
     snapshot.forEach(child=>{
       const u = child.val();
