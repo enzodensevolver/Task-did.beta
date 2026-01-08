@@ -9,7 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
 <script>
-// Configuração do Firebase
+// Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
   authDomain: "sua-rotina-em-um-site.firebaseapp.com",
@@ -42,15 +42,10 @@ body{
   border-radius:18px;
   box-shadow:0 20px 40px rgba(0,0,0,.25);
   text-align:center;
-  animation:fade .6s ease;
-}
-@keyframes fade{
-  from{opacity:0;transform:translateY(15px)}
-  to{opacity:1;transform:none}
 }
 h1{margin:0 0 10px;}
 p{margin:0 0 20px;color:#555;}
-input{
+input,select{
   width:100%;
   padding:12px;
   margin:8px 0;
@@ -78,6 +73,12 @@ button{
 <h1>🚀 Minha Rotina</h1>
 <p>Crie hábitos, ganhe XP e evolua</p>
 
+<select id="langSelect">
+  <option value="pt">🇧🇷 Português</option>
+  <option value="en">🇺🇸 English</option>
+  <option value="es">🇪🇸 Español</option>
+</select>
+
 <input id="name" placeholder="Nome">
 <input id="email" placeholder="Email">
 <input id="password" type="password" placeholder="Senha">
@@ -93,21 +94,29 @@ const msg = document.getElementById("msg");
 const nameInput = document.getElementById("name");
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
+const langSelect = document.getElementById("langSelect");
 
 function register(){
-  if(!nameInput.value || !emailInput.value || !passwordInput.value){
+  const name = nameInput.value.trim();
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+  const lang = langSelect.value;
+
+  if(!name || !email || !password){
     msg.innerText = "Preencha todos os campos!";
     return;
   }
-  auth.createUserWithEmailAndPassword(emailInput.value,passwordInput.value)
+
+  auth.createUserWithEmailAndPassword(email,password)
   .then(cred=>{
     db.collection("users").doc(cred.user.uid).set({
-      name: nameInput.value,
-      email: emailInput.value,
-      xp: 0,
-      level: 1,
-      lang: "pt",
-      role: "user" // padrão todo usuário é user
+      name,
+      email,
+      xp:0,
+      level:1,
+      lang,
+      role:"user",
+      tasks:[]
     });
     window.location="dashboard.html";
   })
@@ -115,12 +124,20 @@ function register(){
 }
 
 function login(){
-  if(!emailInput.value || !passwordInput.value){
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+  if(!email || !password){
     msg.innerText = "Preencha todos os campos!";
     return;
   }
-  auth.signInWithEmailAndPassword(emailInput.value,passwordInput.value)
-  .then(()=>{window.location="dashboard.html";})
+  auth.signInWithEmailAndPassword(email,password)
+  .then(cred=>{
+    // Carrega idioma do usuário no login e atualiza localStorage para dashboard
+    db.collection("users").doc(cred.user.uid).get().then(doc=>{
+      langSelect.value = doc.data().lang || "pt";
+      window.location="dashboard.html";
+    });
+  })
   .catch(e=>msg.innerText=e.message);
 }
 </script>
