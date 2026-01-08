@@ -5,12 +5,12 @@
 <title>Trilha de Troféus Diária</title>
 <style>
 body{margin:0;font-family:Arial;background:#ccefc4;overflow:hidden;}
-#trailContainer{position:relative;width:100vw;height:100vh;background:#d0f0c0;}
+#trailContainer{position:relative;width:100vw;height:100vh;background:url('https://images.unsplash.com/photo-1506765515384-028b60a970df?auto=format&fit=crop&w=1600&q=80') no-repeat center center/cover;}
 .trophy-node{position:absolute;width:60px;height:60px;border-radius:50%;display:flex;justify-content:center;align-items:center;font-size:24px;color:white;cursor:pointer;transition:0.3s;box-shadow:0 3px 6px rgba(0,0,0,0.3);}
 .trophy-node.pending{background:#6366f1;}
 .trophy-node.done{background:#f59e0b;}
 #completeBtn{position:absolute;display:none;background:#22c55e;color:white;padding:8px 12px;border:none;border-radius:8px;cursor:pointer;}
-#completedContainer{position:absolute;top:20px;left:20px;background:white;padding:10px;border-radius:10px;max-height:50vh;overflow-y:auto;}
+#completedContainer{position:absolute;top:20px;left:20px;background:white;padding:10px;border-radius:10px;max-height:50vh;overflow-y:auto;opacity:0.9;}
 .missionItem{margin-bottom:5px;cursor:pointer;}
 .counter{background:#6366f1;color:white;padding:2px 6px;border-radius:8px;margin-left:5px;font-size:12px;}
 #addMissionBtn{position:absolute;top:20px;right:20px;font-size:28px;cursor:pointer;}
@@ -99,12 +99,12 @@ const completedList = document.getElementById("completedList");
 let userId, userData;
 let selectedTaskKey = null;
 
-// SHOW FUNCTIONS
+// ================= SHOW FUNCTIONS =================
 function showLogin(){ loginCard.style.display="block"; trailContainer.style.display="none"; addMissionCard.style.display="none";}
 function showTrail(){ loginCard.style.display="none"; trailContainer.style.display="block"; addMissionCard.style.display="none"; renderTrail(); renderCompleted();}
 function showAddMission(){ loginCard.style.display="none"; trailContainer.style.display="none"; addMissionCard.style.display="block";}
 
-// AUTH
+// ================= AUTH =================
 document.getElementById("registerBtn").onclick = ()=>{
   const name = nameInput.value.trim();
   const email = emailInput.value.trim();
@@ -126,12 +126,14 @@ document.getElementById("loginBtn").onclick = ()=>{
     userId = cred.user.uid;
     db.ref("users/"+userId).once("value").then(snap=>{
       userData = snap.val();
+      // Daily reset at login
+      dailyReset();
       showTrail();
     });
   }).catch(e=>msg.innerText=e.message);
 };
 
-// ADD MISSION
+// ================= ADD MISSION =================
 addMissionBtn.onclick = showAddMission;
 backBtn.onclick = showTrail;
 saveMissionBtn.onclick = ()=>{
@@ -148,16 +150,18 @@ saveMissionBtn.onclick = ()=>{
   });
 };
 
-// TRAIL
+// ================= TRAIL =================
 function renderTrail(){
   trailContainer.querySelectorAll(".trophy-node").forEach(n=>n.remove());
   if(!userData.tasks) return;
-  const tasksArr = Object.entries(userData.tasks).sort((a,b)=>a[1].time.localeCompare(b[1].time));
+  const tasksArr = Object.entries(userData.tasks)
+    .filter(([k,t])=>!t.done) // only pending
+    .sort((a,b)=>a[1].time.localeCompare(b[1].time));
   const width = window.innerWidth-100;
   const height = window.innerHeight-100;
   tasksArr.forEach(([key,t],i)=>{
     const node = document.createElement("div");
-    node.className="trophy-node "+(t.done?"done":"pending");
+    node.className="trophy-node pending";
     node.innerText="🎯";
     node.style.left = (50 + width*(i/tasksArr.length))+"px";
     node.style.top = (50 + (height/2)*(i%2===0?0.3:0.7))+"px";
@@ -171,12 +175,12 @@ function renderTrail(){
   });
 }
 
-// COMPLETE BUTTON
+// ================= COMPLETE BUTTON =================
 completeBtn.onclick = ()=>{
   if(!selectedTaskKey) return;
   const task = userData.tasks[selectedTaskKey];
   const now = Date.now();
-  task.done = true;
+  task.done = true; // disappear from trail
   if(!task.history) task.history=[];
   task.history.push(now);
   userData.xp = (userData.xp||0)+task.xp;
@@ -188,7 +192,7 @@ completeBtn.onclick = ()=>{
   });
 };
 
-// COMPLETED MISSIONS
+// ================= COMPLETED MISSIONS =================
 function renderCompleted(){
   completedList.innerHTML="";
   if(!userData.tasks) return;
@@ -204,6 +208,29 @@ function renderCompleted(){
     }
   });
 }
+
+// ================= DAILY RESET =================
+function dailyReset(){
+  const now = new Date();
+  const lastReset = userData.lastReset || 0;
+  const today = new Date().setHours(0,0,0,0);
+  if(lastReset < today){
+    // reset all tasks to done=false
+    Object.values(userData.tasks).forEach(t=>t.done=false);
+    userData.lastReset = Date.now();
+    db.ref("users/"+userId).set(userData);
+  }
+}
+
+// ================= AUTO RESET AT MIDNIGHT =================
+setInterval(()=>{
+  const now = new Date();
+  if(now.getHours()===0 && now.getMinutes()===0){
+    dailyReset();
+    renderTrail();
+    renderCompleted();
+  }
+},60000);
 
 </script>
 </body>
