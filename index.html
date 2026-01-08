@@ -109,11 +109,11 @@ function register(){
     return;
   }
 
-  const role = email === ADMIN_EMAIL ? "admin" : "user";
-
   auth.createUserWithEmailAndPassword(email,password)
   .then(cred=>{
-    db.collection("users").doc(cred.user.uid).set({
+    const role = email === ADMIN_EMAIL ? "admin" : "user";
+    // Salva o usuário no Firestore e espera terminar antes de redirecionar
+    return db.collection("users").doc(cred.user.uid).set({
       name,
       email,
       xp:0,
@@ -121,7 +121,9 @@ function register(){
       lang,
       role,
       tasks:[]
-    });
+    }).then(()=> role); // retorna o role para usar no redirecionamento
+  })
+  .then(role=>{
     window.location = role === "admin" ? "admin.html" : "dashboard.html";
   })
   .catch(e=>msg.innerText=e.message);
@@ -134,12 +136,15 @@ function login(){
     msg.innerText = "Preencha todos os campos!";
     return;
   }
+
   auth.signInWithEmailAndPassword(email,password)
   .then(cred=>{
-    db.collection("users").doc(cred.user.uid).get().then(doc=>{
-      const role = doc.data().role || "user";
-      window.location = role === "admin" ? "admin.html" : "dashboard.html";
-    });
+    // Carrega dados do usuário
+    return db.collection("users").doc(cred.user.uid).get();
+  })
+  .then(doc=>{
+    const role = doc.data().role || "user";
+    window.location = role === "admin" ? "admin.html" : "dashboard.html";
   })
   .catch(e=>msg.innerText=e.message);
 }
