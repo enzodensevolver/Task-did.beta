@@ -6,8 +6,7 @@
 <style>
 *{box-sizing:border-box;}
 body{margin:0;font-family:Arial;background:linear-gradient(135deg,#6366f1,#22c55e);display:flex;justify-content:center;align-items:center;min-height:100vh;}
-.card{background:white;width:100%;max-width:600px;padding:30px;border-radius:18px;box-shadow:0 20px 40px rgba(0,0,0,.25);text-align:center;animation:fadeIn .5s ease;margin:10px;}
-@keyframes fadeIn{from{opacity:0; transform:translateY(20px);}to{opacity:1; transform:translateY(0);}}
+.card{background:white;width:100%;max-width:600px;padding:30px;border-radius:18px;box-shadow:0 20px 40px rgba(0,0,0,.25);text-align:center;margin:10px;}
 input,select,button{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #ccc;font-size:15px;}
 button{cursor:pointer;border:none;font-weight:bold;}
 .btn-login{background:#6366f1;color:white;}
@@ -18,7 +17,7 @@ button{cursor:pointer;border:none;font-weight:bold;}
 @keyframes pop{from{transform:scale(0);}to{transform:scale(1);}}
 .progress-bar{width:100%;background:#ddd;border-radius:10px;overflow:hidden;margin:10px 0;height:20px;}
 .progress-fill{height:100%;width:0;background:#22c55e;text-align:right;padding-right:5px;color:white;font-weight:bold;border-radius:10px;transition: width 0.5s ease;}
-.trophy-path{display:flex;justify-content:space-between;margin:20px 0;overflow-x:auto;}
+.trophy-path{display:flex;justify-content:flex-start;margin:20px 0;overflow-x:auto;}
 .trophy-node{width:50px;height:50px;border-radius:50%;background:#ddd;display:flex;justify-content:center;align-items:center;font-size:24px;transition:background 0.5s;}
 .trophy-node.completed{background:#f59e0b;color:white;}
 #completedTasks{margin-top:20px;text-align:left;}
@@ -26,7 +25,6 @@ button{cursor:pointer;border:none;font-weight:bold;}
 </head>
 <body>
 
-<!-- LOGIN -->
 <div class="card" id="loginCard">
 <h1>🚀 Minha Rotina</h1>
 <p>Crie hábitos, ganhe XP e evolua</p>
@@ -42,7 +40,6 @@ button{cursor:pointer;border:none;font-weight:bold;}
 <p id="msg"></p>
 </div>
 
-<!-- DASHBOARD CRIANÇA -->
 <div class="card" id="dashboardCard" style="display:none;">
 <h2>Caminho de Troféus</h2>
 <div class="progress-bar"><div class="progress-fill" id="xpBar">0 XP</div></div>
@@ -54,7 +51,6 @@ button{cursor:pointer;border:none;font-weight:bold;}
 <button class="btn-logout" id="logoutChildBtn">🚪 Sair</button>
 </div>
 
-<!-- PAINEL PAIS -->
 <div class="card" id="parentCard" style="display:none;">
 <h2>👪 Painel dos Pais</h2>
 <h3>Criar tarefa para a criança</h3>
@@ -67,13 +63,13 @@ button{cursor:pointer;border:none;font-weight:bold;}
 <button class="btn-logout" id="logoutParentBtn">🚪 Sair</button>
 </div>
 
-<!-- Firebase v8 compatível direto -->
+<!-- Firebase 8 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
-// ================= FIREBASE CONFIG =================
+// ================= FIREBASE =================
 const firebaseConfig = {
   apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
   authDomain: "sua-rotina-em-um-site.firebaseapp.com",
@@ -109,8 +105,8 @@ const createTaskBtn = document.getElementById("createTaskBtn");
 
 let userId, userData;
 
-// ================= AUTH STATE =================
-auth.onAuthStateChanged(user => {
+// ================= AUTH =================
+auth.onAuthStateChanged(user=>{
   if(!user){ showLogin(); return; }
   userId = user.uid;
   db.ref("users/"+userId).once("value").then(snap=>{
@@ -125,7 +121,6 @@ auth.onAuthStateChanged(user => {
   });
 });
 
-// ================= SHOW =================
 function showLogin(){ loginCard.style.display='block'; dashboardCard.style.display='none'; parentCard.style.display='none'; }
 function showDashboard(){ loginCard.style.display='none'; dashboardCard.style.display='block'; parentCard.style.display='none'; }
 function showParent(){ loginCard.style.display='none'; dashboardCard.style.display='none'; parentCard.style.display='block'; }
@@ -203,17 +198,12 @@ function completeTask(key){
   if(userData.xp >=100){ userData.xp-=100; userData.level++; userData.badges.push('🏆 Novo nível!'); }
   db.ref("users/"+userId).set(userData);
   loadChildDashboard();
-  const node = document.createElement('div');
-  node.className='badge';
-  node.innerText='🏆';
-  document.body.appendChild(node);
-  setTimeout(()=>node.remove(),1000);
 }
 
 function renderTrophyPath(){
   trophyPath.innerHTML='';
   for(let key in userData.tasks){
-    const t=userData.tasks[key];
+    const t = userData.tasks[key];
     const node = document.createElement('div');
     node.className='trophy-node';
     if(t.done) node.classList.add('completed');
