@@ -8,12 +8,8 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
+<script>
+// Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
   authDomain: "sua-rotina-em-um-site.firebaseapp.com",
@@ -22,11 +18,7 @@ const firebaseConfig = {
   messagingSenderId: "774359583618",
   appId: "1:774359583618:web:3ccf1600d1ab1dc6eadd9b"
 };
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
 firebase.initializeApp(firebaseConfig);
-
 const auth = firebase.auth();
 const db = firebase.firestore();
 </script>
@@ -48,6 +40,7 @@ body{
   width:100%;
   max-width:420px;
   box-shadow:0 10px 30px rgba(0,0,0,.2);
+  text-align:center;
 }
 button{
   width:100%;
@@ -61,11 +54,10 @@ button{
 </head>
 
 <body>
-
 <div class="card">
   <h2 id="title">🎮 Meu Progresso</h2>
 
-  <select id="lang" onchange="changeLang()" style="width:100%;padding:8px">
+  <select id="lang" onchange="changeLang()" style="width:100%;padding:8px;margin-bottom:10px;">
     <option value="pt">🇧🇷 Português</option>
     <option value="en">🇺🇸 English</option>
     <option value="es">🇪🇸 Español</option>
@@ -74,44 +66,20 @@ button{
   <p id="levelText"></p>
   <p id="xpText"></p>
 
-  <button onclick="completeTask()" style="background:#22c55e;color:white">
-    ✅ Concluir desafio
-  </button>
-
-  <button onclick="logout()" style="background:#ef4444;color:white">
-    🚪 Sair
-  </button>
+  <button onclick="completeTask()" style="background:#22c55e;color:white">✅ Concluir desafio</button>
+  <button onclick="logout()" style="background:#ef4444;color:white">🚪 Sair</button>
 </div>
 
 <script>
 const texts = {
-  pt:{
-    title:"🎮 Meu Progresso",
-    level:"Nível",
-    xp:"XP",
-    task:"Desafio concluído! +10 XP"
-  },
-  en:{
-    title:"🎮 My Progress",
-    level:"Level",
-    xp:"XP",
-    task:"Challenge completed! +10 XP"
-  },
-  es:{
-    title:"🎮 Mi Progreso",
-    level:"Nivel",
-    xp:"XP",
-    task:"¡Desafío completado! +10 XP"
-  }
+  pt:{title:"🎮 Meu Progresso",level:"Nível",xp:"XP",task:"Desafio concluído! +10 XP"},
+  en:{title:"🎮 My Progress",level:"Level",xp:"XP",task:"Challenge completed! +10 XP"},
+  es:{title:"🎮 Mi Progreso",level:"Nivel",xp:"XP",task:"¡Desafío completado! +10 XP"}
 };
 
 let userId, userData, currentLang="pt";
-
 auth.onAuthStateChanged(user=>{
-  if(!user){
-    window.location="index.html";
-    return;
-  }
+  if(!user){window.location="index.html";return;}
   userId = user.uid;
   loadData();
 });
@@ -140,24 +108,13 @@ function changeLang(){
 
 function completeTask(){
   userData.xp += 10;
-  if(userData.xp >= 100){
-    userData.xp = 0;
-    userData.level++;
-  }
-
-  db.collection("users").doc(userId).update({
-    xp:userData.xp,
-    level:userData.level
-  });
-
+  if(userData.xp >= 100){ userData.xp = 0; userData.level++; }
+  db.collection("users").doc(userId).update({ xp:userData.xp, level:userData.level });
   alert(texts[currentLang].task);
   updateUI();
 }
 
-function logout(){
-  auth.signOut();
-}
+function logout(){ auth.signOut().then(()=>window.location="index.html"); }
 </script>
-
 </body>
 </html>
