@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Dashboard</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
+  authDomain: "sua-rotina-em-um-site.firebaseapp.com",
+  projectId: "sua-rotina-em-um-site",
+  storageBucket: "sua-rotina-em-um-site.firebasestorage.app",
+  messagingSenderId: "774359583618",
+  appId: "1:774359583618:web:3ccf1600d1ab1dc6eadd9b"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.firestore();
+</script>
+</head>
+
+<body>
+<h2>📅 Minha Rotina</h2>
+<input id="task" placeholder="Novo desafio">
+<button onclick="add()">Adicionar</button>
+<ul id="list"></ul>
+
+<script>
+auth.onAuthStateChanged(u=>{
+if(!u) location.href="index.html";
+db.collection("tasks").where("uid","==",u.uid)
+.onSnapshot(s=>{
+list.innerHTML="";
+s.forEach(d=>{
+list.innerHTML+=`<li>${d.data().text}</li>`;
+});
+});
+});
+
+function add(){
+auth.currentUser && db.collection("tasks").add({
+uid:auth.currentUser.uid,
+text:task.value,
+xp:10
+});
+task.value="";
+}
+</script>
+</body>
+</html>
