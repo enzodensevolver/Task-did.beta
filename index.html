@@ -1,243 +1,69 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<title>Minha Rotina Gameificada</title>
-
-<!-- Firebase 8 -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
 <script>
-// Config Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
-  authDomain: "sua-rotina-em-um-site.firebaseapp.com",
-  databaseURL: "https://sua-rotina-em-um-site-default-rtdb.firebaseio.com/",
-  projectId: "sua-rotina-em-um-site",
-  storageBucket: "sua-rotina-em-um-site.appspot.com",
-  messagingSenderId: "774359583618",
-  appId: "1:774359583618:web:3ccf1600d1ab1dc6eadd9b"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.database();
-const ADMIN_EMAIL = "enzo.n.sabino@gmail.com";
-</script>
+}
+}
 
-<style>
-/* Seu CSS permanece o mesmo */
-*{box-sizing:border-box;}
-body{margin:0;font-family:Arial;background:linear-gradient(135deg,#6366f1,#22c55e);display:flex;justify-content:center;align-items:center;min-height:100vh;}
-.card{background:white;width:100%;max-width:500px;padding:30px;border-radius:18px;box-shadow:0 20px 40px rgba(0,0,0,.25);text-align:center;animation:fadeIn .5s ease;}
-@keyframes fadeIn{from{opacity:0; transform:translateY(20px);}to{opacity:1; transform:translateY(0);}}
-h1,h2,h3{margin:0 0 10px;}
-p{margin:0 0 20px;color:#555;}
-input,select,textarea{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #ccc;font-size:15px;}
-button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:10px;font-size:16px;cursor:pointer;}
-.btn-create{background:#22c55e;color:white;}
-.btn-login{background:#6366f1;color:white;}
-.btn-logout{background:#ef4444;color:white;}
-.task{background:#f0f0f0;margin:5px 0;padding:10px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;}
-.task button{width:auto;padding:5px 10px;font-size:14px;cursor:pointer;}
-#msg{margin-top:10px;color:#ef4444;}
-.progress-bar{width:100%;background:#ddd;border-radius:10px;overflow:hidden;margin:10px 0;height:20px;}
-.progress-fill{height:100%;width:0;background:#22c55e;text-align:right;padding-right:5px;color:white;font-weight:bold;border-radius:10px;transition: width 0.5s ease;}
-.badge{display:inline-block;background:#f59e0b;color:white;padding:5px 10px;border-radius:12px;margin:5px 5px 0 0;font-size:12px;animation:pop 0.3s ease;}
-@keyframes pop{from{transform:scale(0);}to{transform:scale(1);}}
-</style>
-</head>
-<body>
 
-<!-- LOGIN -->
-<div class="card" id="loginCard">
-<h1>🚀 Minha Rotina</h1>
-<p>Crie hábitos, ganhe XP e evolua</p>
-<select id="langSelect">
-  <option value="pt">🇧🇷 Português</option>
-  <option value="en">🇺🇸 English</option>
-  <option value="es">🇪🇸 Español</option>
-</select>
-<input id="name" placeholder="Nome">
-<input id="email" placeholder="Email">
-<input id="password" type="password" placeholder="Senha">
-<button class="btn-create" onclick="register()">Criar conta</button>
-<button class="btn-login" onclick="login()">Entrar</button>
-<p id="msg"></p>
-</div>
+function completeTask(key){
+userData.tasks[key].done=true;
+userData.xp += userData.tasks[key].xp;
+if(userData.xp >=100){ userData.xp-=100; userData.level++; userData.badges.push('🏆 Novo nível!'); }
+db.ref('users/'+userId).set(userData);
+loadChildDashboard();
+// animação divertida
+const node = document.createElement('div');
+node.className='badge';
+node.innerText='🏆';
+document.body.appendChild(node);
+setTimeout(()=>node.remove(),1000);
+}
 
-<!-- DASHBOARD -->
-<div class="card" id="dashboardCard" style="display:none;">
-<h2 id="titleDash"></h2>
-<div class="reward" id="levelReward"></div>
-<div class="progress-bar"><div class="progress-fill" id="xpBar">0 XP</div></div>
-<div id="tasks"></div>
-<h3>Badges:</h3>
-<div id="badges"></div>
-<button class="btn-logout" onclick="logout()">🚪 Sair</button>
-</div>
 
-<!-- ADMIN -->
-<div class="card" id="adminCard" style="display:none;">
-<h2>👑 Painel Admin</h2>
-<h3>Criar Desafio Global</h3>
-<input id="adminTaskName" placeholder="Nome do desafio">
-<input id="adminTaskXP" type="number" placeholder="XP do desafio">
-<button onclick="createGlobalTask()">➕ Criar desafio</button>
-<h3>Usuários</h3>
-<ul id="userList"></ul>
-<button class="btn-logout" onclick="logout()">🚪 Sair</button>
-</div>
+function renderTrophyPath(){
+trophyPath.innerHTML='';
+for(let key in userData.tasks){
+const t=userData.tasks[key];
+const node=document.createElement('div');
+node.className='trophy-node';
+if(t.done) node.classList.add('completed');
+node.innerText='🏆';
+trophyPath.appendChild(node);
+}
+}
 
-<script>
-// Textos
-const texts = {
-  pt:{title:"🎯 Meu Progresso",level:"Nível",xp:"XP",complete:"Concluído! +XP"},
-  en:{title:"🎯 My Progress",level:"Level",xp:"XP",complete:"Completed! +XP"},
-  es:{title:"🎯 Mi Progreso",level:"Nivel",xp:"XP",complete:"¡Completado! +XP"}
-};
 
-// ELEMENTOS
-const loginCard = document.getElementById("loginCard");
-const dashboardCard = document.getElementById("dashboardCard");
-const adminCard = document.getElementById("adminCard");
-const msg = document.getElementById("msg");
-const nameInput = document.getElementById("name");
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
-const langSelect = document.getElementById("langSelect");
-const taskList = document.getElementById("tasks");
-const levelReward = document.getElementById("levelReward");
-const xpBar = document.getElementById("xpBar");
-const titleDash = document.getElementById("titleDash");
-const badgesDiv = document.getElementById("badges");
-const userList = document.getElementById("userList");
-
-let userId, userData;
-
-// ----------------- AUTH -----------------
-auth.onAuthStateChanged(user=>{
-  if(!user){ showLogin(); }
-  else{
-    userId = user.uid;
-    db.ref("users/"+userId).once("value").then(snapshot=>{
-      userData = snapshot.val();
-      if(!userData){ // primeiro login
-        const role = user.email === ADMIN_EMAIL ? "admin" : "user";
-        userData = {name:nameInput.value||user.email,xp:0,level:1,lang:langSelect.value,role:role,tasks:[],badges:[]};
-        db.ref("users/"+userId).set(userData);
-      }
-      if(userData.role==="admin"){ showAdmin(); loadAdminData(); }
-      else{ showDashboard(); updateDashboardUI(); }
-    }).catch(e=>{ msg.innerText = "Erro ao carregar dados: "+e.message; });
-  }
+// ----------------- PAINEL PAIS -----------------
+function loadParentPanel(){
+childList.innerHTML='';
+db.ref('users').once('value').then(snap=>{
+snap.forEach(child=>{
+const u=child.val();
+if(u.role==='child'){
+const li=document.createElement('li');
+li.innerText=u.name+' - XP:'+u.xp;
+childList.appendChild(li);
+}
 });
-
-// ----------------- SHOW SECTIONS -----------------
-function showLogin(){ loginCard.style.display="block"; dashboardCard.style.display="none"; adminCard.style.display="none"; }
-function showDashboard(){ loginCard.style.display="none"; dashboardCard.style.display="block"; adminCard.style.display="none"; }
-function showAdmin(){ loginCard.style.display="none"; dashboardCard.style.display="none"; adminCard.style.display="block"; }
-
-// ----------------- REGISTER/LOGIN -----------------
-function register(){
-  const name = nameInput.value.trim();
-  const email = emailInput.value.trim();
-  const password = passwordInput.value;
-  const lang = langSelect.value;
-  if(!name || !email || !password){ msg.innerText="Preencha todos os campos!"; return; }
-
-  auth.createUserWithEmailAndPassword(email,password)
-  .then(cred=>{
-    const role = email===ADMIN_EMAIL?"admin":"user";
-    userId = cred.user.uid;
-    userData = {name,email,xp:0,level:1,lang,role,tasks:[],badges:[]};
-    db.ref("users/"+userId).set(userData);
-    if(role==="admin"){ showAdmin(); loadAdminData(); }
-    else{ showDashboard(); updateDashboardUI(); }
-  })
-  .catch(e=>msg.innerText=e.message);
+});
 }
 
-function login(){
-  const email = emailInput.value.trim();
-  const password = passwordInput.value;
-  if(!email || !password){ msg.innerText="Preencha todos os campos!"; return; }
 
-  auth.signInWithEmailAndPassword(email,password)
-  .then(cred=>{
-    userId = cred.user.uid;
-    db.ref("users/"+userId).once("value").then(snapshot=>{
-      userData = snapshot.val();
-      if(userData.role==="admin"){ showAdmin(); loadAdminData(); }
-      else{ showDashboard(); updateDashboardUI(); }
-    }).catch(e=>msg.innerText = "Erro ao carregar dados: "+e.message);
-  })
-  .catch(e=>msg.innerText=e.message);
+function createTaskForChild(){
+const email=document.getElementById('childEmail').value.trim();
+const name=document.getElementById('taskName').value.trim();
+const xp=parseInt(document.getElementById('taskXP').value);
+if(!email||!name||isNaN(xp)){ alert('Preencha todos os campos'); return; }
+db.ref('users').orderByChild('email').equalTo(email).once('value').then(snap=>{
+snap.forEach(child=>{
+const u=child.val();
+const key='task_'+Date.now();
+u.tasks[key]={name:name,xp:xp,done:false};
+db.ref('users/'+child.key).set(u);
+alert('Tarefa criada!');
+});
+});
 }
 
-// ----------------- DASHBOARD -----------------
-function updateDashboardUI(){
-  const t = texts[userData.lang||"pt"];
-  titleDash.innerText = t.title;
-  levelReward.innerText = `${t.level}: ${userData.level}`;
-  const percent = (userData.xp % 100);
-  xpBar.style.width = percent + "%";
-  xpBar.innerText = userData.xp + " XP";
-
-  taskList.innerHTML="";
-  if(userData.tasks.length===0){ taskList.innerHTML="<p>Nenhuma tarefa disponível.</p>"; }
-  userData.tasks.forEach((task,i)=>{
-    const div=document.createElement("div");
-    div.className="task";
-    div.innerHTML=`<span>${task.name} (XP:${task.xp})</span><button onclick="completeTask(${i})">✅</button>`;
-    taskList.appendChild(div);
-  });
-
-  badgesDiv.innerHTML="";
-  userData.badges.forEach(b=>{ const span=document.createElement("span"); span.className="badge"; span.innerText=b; badgesDiv.appendChild(span); });
-}
-
-function completeTask(i){
-  const task = userData.tasks[i];
-  userData.xp += task.xp;
-  if(userData.xp >= 100){ userData.xp -= 100; userData.level++; userData.badges.push("🏆 Novo nível!"); }
-  userData.tasks.splice(i,1);
-  db.ref("users/"+userId).set(userData);
-  updateDashboardUI();
-  alert(`✅ Concluído! +${task.xp} XP`);
-}
-
-// ----------------- ADMIN -----------------
-function loadAdminData(){
-  db.ref("users").on("value",snapshot=>{
-    userList.innerHTML="";
-    snapshot.forEach(child=>{
-      const u = child.val();
-      const li = document.createElement("li");
-      li.innerText=`${u.name} - XP:${u.xp} - Lv:${u.level}`;
-      userList.appendChild(li);
-    });
-  });
-}
-
-function createGlobalTask(){
-  const name=document.getElementById("adminTaskName").value.trim();
-  const xp=parseInt(document.getElementById("adminTaskXP").value);
-  if(!name || isNaN(xp)){ alert("Preencha nome e XP!"); return; }
-  db.ref("users").once("value").then(snapshot=>{
-    snapshot.forEach(child=>{
-      const u = child.val();
-      u.tasks.push({name,xp});
-      db.ref("users/"+child.key).set(u);
-    });
-  });
-  document.getElementById("adminTaskName").value="";
-  document.getElementById("adminTaskXP").value="";
-}
 
 // ----------------- LOGOUT -----------------
 function logout(){ auth.signOut().then(showLogin); }
 </script>
-</body>
-</html>
