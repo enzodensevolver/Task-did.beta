@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Login</title>
+<title>Minha Rotina</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -15,49 +15,120 @@ const firebaseConfig = {
   projectId: "SEU_PROJETO"
 };
 firebase.initializeApp(firebaseConfig);
+
 const auth = firebase.auth();
 const db = firebase.firestore();
 </script>
 
 <style>
-body{margin:0;font-family:Arial;background:linear-gradient(135deg,#6366f1,#22c55e);height:100vh;display:flex;justify-content:center;align-items:center}
-#box{background:#fff;padding:25px;border-radius:15px;width:320px;text-align:center}
-input,button{width:100%;padding:10px;margin:6px 0}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:Arial, sans-serif;
+  background:linear-gradient(135deg,#6366f1,#22c55e);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+.card{
+  background:white;
+  width:100%;
+  max-width:380px;
+  padding:30px;
+  border-radius:18px;
+  box-shadow:0 20px 40px rgba(0,0,0,.25);
+  text-align:center;
+  animation:fade .6s ease;
+}
+@keyframes fade{
+  from{opacity:0;transform:translateY(15px)}
+  to{opacity:1;transform:none}
+}
+h1{
+  margin:0 0 10px;
+}
+p{
+  margin:0 0 20px;
+  color:#555;
+}
+input{
+  width:100%;
+  padding:12px;
+  margin:8px 0;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:15px;
+}
+button{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border:none;
+  border-radius:10px;
+  font-size:16px;
+  cursor:pointer;
+}
+.btn-create{
+  background:#22c55e;
+  color:white;
+}
+.btn-login{
+  background:#6366f1;
+  color:white;
+}
+#msg{
+  margin-top:10px;
+  color:#ef4444;
+}
 </style>
 </head>
 
 <body>
-<div id="box">
-<h2>🌟 Minha Rotina</h2>
+
+<div class="card" id="app">
+
+<h1>🚀 Minha Rotina</h1>
+<p>Crie hábitos, ganhe XP e evolua</p>
+
 <input id="name" placeholder="Nome">
 <input id="email" placeholder="Email">
 <input id="password" type="password" placeholder="Senha">
-<button onclick="register()">Criar conta</button>
-<button onclick="login()">Entrar</button>
+
+<button class="btn-create" onclick="register()">Criar conta</button>
+<button class="btn-login" onclick="login()">Entrar</button>
+
 <p id="msg"></p>
+
 </div>
 
 <script>
+const msg = document.getElementById("msg");
+const appDiv = document.getElementById("app");
+
 function register(){
-auth.createUserWithEmailAndPassword(email.value,password.value)
-.then(c=>{
-db.collection("users").doc(c.user.uid).set({
-name:name.value,
-email:email.value,
-xp:0,
-level:1,
-role:"user"
-});
-window.location="dashboard.html";
-})
-.catch(e=>msg.innerText=e.message);
+  auth.createUserWithEmailAndPassword(email.value,password.value)
+  .then(cred=>{
+    db.collection("users").doc(cred.user.uid).set({
+      name:name.value,
+      email:email.value,
+      xp:0,
+      level:1,
+      lang:"pt"
+    });
+    window.location="dashboard.html";
+  })
+  .catch(e=>msg.innerText=e.message);
 }
 
 function login(){
-auth.signInWithEmailAndPassword(email.value,password.value)
-.then(()=>window.location="dashboard.html")
-.catch(e=>msg.innerText=e.message);
+  auth.signInWithEmailAndPassword(email.value,password.value)
+  .then(()=>{
+    window.location="dashboard.html";
+  })
+  .catch(e=>msg.innerText=e.message);
 }
 </script>
+
 </body>
 </html>
