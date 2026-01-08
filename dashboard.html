@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Dashboard Personalizável</title>
+<title>Dashboard</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -26,7 +26,7 @@ const db = firebase.firestore();
 <style>
 body{
   margin:0;
-  font-family:Arial,sans-serif;
+  font-family:Arial;
   background:linear-gradient(135deg,#6366f1,#22c55e);
   min-height:100vh;
   display:flex;
@@ -38,12 +38,12 @@ body{
   padding:25px;
   border-radius:15px;
   width:100%;
-  max-width:550px;
+  max-width:500px;
   box-shadow:0 10px 30px rgba(0,0,0,.2);
   text-align:center;
 }
 h2{margin-bottom:15px;}
-select,input{margin-bottom:10px;padding:8px;width:100%;border-radius:8px;}
+.reward{font-size:18px;margin:8px 0;}
 button{
   width:100%;
   padding:10px;
@@ -62,32 +62,16 @@ button{
   justify-content:space-between;
   align-items:center;
 }
-.task button{
-  width:auto;
-  padding:5px 10px;
-  font-size:14px;
-}
-.reward{font-size:18px;margin:8px 0;}
+.task button{width:auto;padding:5px 10px;font-size:14px;}
 </style>
 </head>
 
 <body>
 <div class="card">
-  <h2 id="title">🎯 Dashboard Personalizável</h2>
-
-  <select id="lang" onchange="changeLang()">
-    <option value="pt">🇧🇷 Português</option>
-    <option value="en">🇺🇸 English</option>
-    <option value="es">🇪🇸 Español</option>
-  </select>
+  <h2 id="title"></h2>
 
   <div class="reward" id="levelReward"></div>
   <div class="reward" id="xpReward"></div>
-
-  <h3>Adicionar / Editar Desafio</h3>
-  <input id="taskInput" placeholder="Tarefa (ex: 💪 Exercício)">
-  <input id="xpInput" type="number" placeholder="XP da tarefa">
-  <button style="background:#6366f1;color:white;" onclick="addCustomTask()">➕ Adicionar</button>
 
   <div id="tasks"></div>
 
@@ -95,11 +79,11 @@ button{
 </div>
 
 <script>
-// Textos para idiomas
+// Textos por idioma
 const texts = {
-  pt:{title:"🎯 Dashboard Personalizável",level:"Nível",xp:"XP",complete:"Concluído! +XP",newTask:"Nova tarefa adicionada"},
-  en:{title:"🎯 Custom Dashboard",level:"Level",xp:"XP",complete:"Completed! +XP",newTask:"New task added"},
-  es:{title:"🎯 Panel Personalizable",level:"Nivel",xp:"XP",complete:"¡Completado! +XP",newTask:"Nueva tarea añadida"}
+  pt:{title:"🎯 Dashboard Personalizável",level:"Nível",xp:"XP",complete:"Concluído! +XP"},
+  en:{title:"🎯 Custom Dashboard",level:"Level",xp:"XP",complete:"Completed! +XP"},
+  es:{title:"🎯 Panel Personalizable",level:"Nivel",xp:"XP",complete:"¡Completado! +XP"}
 };
 
 let userId, userData, currentLang="pt";
@@ -118,9 +102,7 @@ auth.onAuthStateChanged(user=>{
 function loadData(){
   db.collection("users").doc(userId).get().then(doc=>{
     userData = doc.data();
-    currentLang = userData.lang || "pt";
-    document.getElementById("lang").value = currentLang;
-    if(!userData.tasks) userData.tasks = [];
+    currentLang = userData.lang || "pt"; // idioma automático
     updateUI();
   });
 }
@@ -134,67 +116,28 @@ function updateUI(){
 
   // Lista de tarefas
   taskList.innerHTML="";
-  userData.tasks.forEach((task,i)=>{
-    const div = document.createElement("div");
-    div.className="task";
-    div.innerHTML=`<span>${task.name} (XP:${task.xp})</span>
-      <div>
-        <button onclick="completeTask(${i})">✅</button>
-        <button onclick="editTask(${i})">✏️</button>
-        <button onclick="deleteTask(${i})">🗑️</button>
-      </div>`;
-    taskList.appendChild(div);
-  });
-}
-
-// Muda idioma
-function changeLang(){
-  currentLang = document.getElementById("lang").value;
-  db.collection("users").doc(userId).update({lang:currentLang});
-  updateUI();
-}
-
-// Adiciona tarefa personalizada
-function addCustomTask(){
-  const name = document.getElementById("taskInput").value.trim();
-  const xp = parseInt(document.getElementById("xpInput").value);
-  if(!name || isNaN(xp)) return alert("Preencha tarefa e XP!");
-  userData.tasks.push({name,xp});
-  db.collection("users").doc(userId).update({tasks:userData.tasks});
-  document.getElementById("taskInput").value="";
-  document.getElementById("xpInput").value="";
-  updateUI();
+  if(userData.tasks && userData.tasks.length>0){
+    userData.tasks.forEach((task,i)=>{
+      const div = document.createElement("div");
+      div.className="task";
+      div.innerHTML=`<span>${task.name} (XP:${task.xp})</span>
+        <button onclick="completeTask(${i})">✅</button>`;
+      taskList.appendChild(div);
+    });
+  } else {
+    taskList.innerHTML="<p>Nenhuma tarefa disponível.</p>";
+  }
 }
 
 // Completa tarefa
 function completeTask(index){
   const task = userData.tasks[index];
   userData.xp += task.xp;
-  if(userData.xp>=100){ userData.xp-=100; userData.level++; }
+  if(userData.xp >=100){ userData.xp -=100; userData.level++; }
   userData.tasks.splice(index,1);
   db.collection("users").doc(userId).update({xp:userData.xp,level:userData.level,tasks:userData.tasks});
   alert(`${texts[currentLang].complete} +${task.xp} XP`);
   updateUI();
-}
-
-// Edita tarefa
-function editTask(index){
-  const newName = prompt("Editar tarefa:",userData.tasks[index].name);
-  const newXp = prompt("Editar XP:",userData.tasks[index].xp);
-  if(newName && !isNaN(parseInt(newXp))){
-    userData.tasks[index] = {name:newName,xp:parseInt(newXp)};
-    db.collection("users").doc(userId).update({tasks:userData.tasks});
-    updateUI();
-  }
-}
-
-// Deleta tarefa
-function deleteTask(index){
-  if(confirm("Deseja realmente deletar esta tarefa?")){
-    userData.tasks.splice(index,1);
-    db.collection("users").doc(userId).update({tasks:userData.tasks});
-    updateUI();
-  }
 }
 
 // Logout
