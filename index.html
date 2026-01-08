@@ -2,68 +2,68 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Minha Rotina Gameificada</title>
+<title>Minha Trilha de Troféus</title>
 <style>
 *{box-sizing:border-box;}
-body{margin:0;font-family:Arial;background:linear-gradient(135deg,#6366f1,#22c55e);display:flex;justify-content:center;align-items:center;min-height:100vh;}
-.card{background:white;width:100%;max-width:600px;padding:30px;border-radius:18px;box-shadow:0 20px 40px rgba(0,0,0,.25);text-align:center;margin:10px;}
-input,select,button{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #ccc;font-size:15px;}
-button{cursor:pointer;border:none;font-weight:bold;}
-.btn-login{background:#6366f1;color:white;}
-.btn-create{background:#22c55e;color:white;}
-.btn-logout{background:#ef4444;color:white;}
+body{margin:0;font-family:Arial;background:linear-gradient(135deg,#8fd3f4,#84fab0);display:flex;justify-content:center;align-items:center;min-height:100vh;overflow:hidden;}
+.card{background:white;width:90%;max-width:800px;padding:20px;border-radius:18px;box-shadow:0 20px 40px rgba(0,0,0,.25);position:relative;}
+button{cursor:pointer;border:none;border-radius:8px;padding:8px;font-weight:bold;}
 .task{background:#f0f0f0;margin:5px 0;padding:10px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;}
-.badge{display:inline-block;background:#f59e0b;color:white;padding:5px 10px;border-radius:12px;margin:5px 5px 0 0;font-size:12px;animation:pop 0.3s ease;}
-@keyframes pop{from{transform:scale(0);}to{transform:scale(1);}}
-.progress-bar{width:100%;background:#ddd;border-radius:10px;overflow:hidden;margin:10px 0;height:20px;}
-.progress-fill{height:100%;width:0;background:#22c55e;text-align:right;padding-right:5px;color:white;font-weight:bold;border-radius:10px;transition: width 0.5s ease;}
-.trophy-path{display:flex;justify-content:flex-start;margin:20px 0;overflow-x:auto;}
-.trophy-node{width:50px;height:50px;border-radius:50%;background:#ddd;display:flex;justify-content:center;align-items:center;font-size:24px;transition:background 0.5s;}
+.trophy-path{display:flex;flex-wrap:wrap;margin:20px 0;}
+.trophy-node{width:60px;height:60px;border-radius:50%;background:#ddd;margin:5px;display:flex;justify-content:center;align-items:center;font-size:24px;transition:0.5s;}
 .trophy-node.completed{background:#f59e0b;color:white;}
-#completedTasks{margin-top:20px;text-align:left;}
+.icon{position:absolute;font-size:24px;cursor:pointer;}
+#addIcon{top:10px;left:10px;}
+#historyIcon{top:10px;right:10px;}
+#levelDisplay{bottom:10px;right:10px;font-weight:bold;font-size:18px;}
+table{width:100%;border-collapse:collapse;}
+th,td{border:1px solid #ccc;padding:8px;text-align:left;}
+#backBtn{position:absolute;top:10px;left:10px;font-size:18px;cursor:pointer;}
 </style>
 </head>
 <body>
 
+<!-- LOGIN -->
 <div class="card" id="loginCard">
-<h1>🚀 Minha Rotina</h1>
-<p>Crie hábitos, ganhe XP e evolua</p>
-<select id="roleSelect">
-  <option value="child">Criança</option>
-  <option value="parent">Pai/Mãe</option>
-</select>
+<h1>🚀 Minha Trilha</h1>
 <input id="name" placeholder="Nome">
 <input id="email" placeholder="Email">
 <input id="password" type="password" placeholder="Senha">
-<button class="btn-create" id="registerBtn">Criar conta</button>
-<button class="btn-login" id="loginBtn">Entrar</button>
-<p id="msg"></p>
+<button id="registerBtn" style="background:#22c55e;color:white;">Criar conta</button>
+<button id="loginBtn" style="background:#6366f1;color:white;">Entrar</button>
+<p id="msg" style="color:red;"></p>
 </div>
 
-<div class="card" id="dashboardCard" style="display:none;">
-<h2>Caminho de Troféus</h2>
-<div class="progress-bar"><div class="progress-fill" id="xpBar">0 XP</div></div>
+<!-- TRILHA DE TROFÉUS -->
+<div class="card" id="trailCard" style="display:none;">
+<div id="addIcon" class="icon">➕</div>
+<div id="historyIcon" class="icon">✔</div>
 <div class="trophy-path" id="trophyPath"></div>
-<h3>Tarefas:</h3>
-<div id="tasks"></div>
-<h3>Missões Cumpridas:</h3>
-<div id="completedTasks"></div>
-<button class="btn-logout" id="logoutChildBtn">🚪 Sair</button>
+<div id="levelDisplay">Lv: 1</div>
 </div>
 
-<div class="card" id="parentCard" style="display:none;">
-<h2>👪 Painel dos Pais</h2>
-<h3>Criar tarefa para a criança</h3>
-<input id="childEmail" placeholder="Email da criança">
-<input id="taskName" placeholder="Nome da tarefa">
-<input id="taskXP" type="number" placeholder="XP da tarefa">
-<button id="createTaskBtn">➕ Criar tarefa</button>
-<h3>Crianças:</h3>
-<ul id="childList"></ul>
-<button class="btn-logout" id="logoutParentBtn">🚪 Sair</button>
+<!-- ADICIONAR MISSÃO -->
+<div class="card" id="addMissionCard" style="display:none;">
+<div id="backBtn">⬅ Voltar</div>
+<h3>Adicionar Missão</h3>
+<table>
+<tr><th>Missão</th><th>XP</th><th>Ação</th></tr>
+<tr>
+<td><input id="missionName" placeholder="Nome da missão"></td>
+<td><input type="number" id="missionXP" placeholder="XP"></td>
+<td><button id="saveMissionBtn" style="background:#22c55e;color:white;">Salvar</button></td>
+</tr>
+</table>
 </div>
 
-<!-- Firebase 8 -->
+<!-- HISTÓRICO -->
+<div class="card" id="historyCard" style="display:none;">
+<div id="backBtnHistory">⬅ Voltar</div>
+<h3>Histórico de Missões</h3>
+<div id="historyList"></div>
+</div>
+
+<!-- FIREBASE 8 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -85,163 +85,121 @@ const db = firebase.database();
 
 // ================= ELEMENTOS =================
 const loginCard = document.getElementById("loginCard");
-const dashboardCard = document.getElementById("dashboardCard");
-const parentCard = document.getElementById("parentCard");
-const msg = document.getElementById("msg");
+const trailCard = document.getElementById("trailCard");
+const addMissionCard = document.getElementById("addMissionCard");
+const historyCard = document.getElementById("historyCard");
+
 const nameInput = document.getElementById("name");
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
-const roleSelect = document.getElementById("roleSelect");
-const tasksDiv = document.getElementById("tasks");
-const xpBar = document.getElementById("xpBar");
+const msg = document.getElementById("msg");
+
+const addIcon = document.getElementById("addIcon");
+const historyIcon = document.getElementById("historyIcon");
+const levelDisplay = document.getElementById("levelDisplay");
 const trophyPath = document.getElementById("trophyPath");
-const completedTasksDiv = document.getElementById("completedTasks");
-const childList = document.getElementById("childList");
-const registerBtn = document.getElementById("registerBtn");
-const loginBtn = document.getElementById("loginBtn");
-const logoutChildBtn = document.getElementById("logoutChildBtn");
-const logoutParentBtn = document.getElementById("logoutParentBtn");
-const createTaskBtn = document.getElementById("createTaskBtn");
+
+const missionName = document.getElementById("missionName");
+const missionXP = document.getElementById("missionXP");
+const saveMissionBtn = document.getElementById("saveMissionBtn");
+const backBtn = document.getElementById("backBtn");
+const historyList = document.getElementById("historyList");
+const backBtnHistory = document.getElementById("backBtnHistory");
 
 let userId, userData;
 
-// ================= AUTH =================
-auth.onAuthStateChanged(user=>{
-  if(!user){ showLogin(); return; }
-  userId = user.uid;
-  db.ref("users/"+userId).once("value").then(snap=>{
-    userData = snap.val();
-    if(!userData){
-      const role = roleSelect.value;
-      userData = {name:nameInput.value,email:emailInput.value,role:role,xp:0,level:1,tasks:{},badges:[]};
-      db.ref("users/"+userId).set(userData);
-    }
-    if(userData.role==='child'){ showDashboard(); loadChildDashboard(); }
-    else { showParent(); loadParentPanel(); }
-  });
-});
+// ================= FUNÇÕES =================
+function showLogin(){ loginCard.style.display="block"; trailCard.style.display="none"; addMissionCard.style.display="none"; historyCard.style.display="none";}
+function showTrail(){ loginCard.style.display="none"; trailCard.style.display="block"; addMissionCard.style.display="none"; historyCard.style.display="none"; renderTrail();}
+function showAddMission(){ loginCard.style.display="none"; trailCard.style.display="none"; addMissionCard.style.display="block"; historyCard.style.display="none";}
+function showHistory(){ loginCard.style.display="none"; trailCard.style.display="none"; addMissionCard.style.display="none"; historyCard.style.display="block"; renderHistory();}
 
-function showLogin(){ loginCard.style.display='block'; dashboardCard.style.display='none'; parentCard.style.display='none'; }
-function showDashboard(){ loginCard.style.display='none'; dashboardCard.style.display='block'; parentCard.style.display='none'; }
-function showParent(){ loginCard.style.display='none'; dashboardCard.style.display='none'; parentCard.style.display='block'; }
-
-// ================= REGISTER =================
-registerBtn.addEventListener('click', ()=>{
+// ================= LOGIN =================
+document.getElementById("registerBtn").addEventListener("click", ()=>{
   const name = nameInput.value.trim();
   const email = emailInput.value.trim();
   const password = passwordInput.value;
-  const role = roleSelect.value;
-  if(!name || !email || !password){ msg.innerText = "Preencha todos os campos!"; return; }
+  if(!name||!email||!password){ msg.innerText="Preencha todos os campos!"; return;}
   auth.createUserWithEmailAndPassword(email,password).then(cred=>{
     userId = cred.user.uid;
-    userData = {name,email,role,xp:0,level:1,tasks:{},badges:[]};
+    userData = {name,email,xp:0,tasks:{},history:[]};
     db.ref("users/"+userId).set(userData);
-    if(role==='child'){ showDashboard(); loadChildDashboard(); }
-    else { showParent(); loadParentPanel(); }
+    showTrail();
   }).catch(e=>msg.innerText=e.message);
 });
 
-// ================= LOGIN =================
-loginBtn.addEventListener('click', ()=>{
+document.getElementById("loginBtn").addEventListener("click", ()=>{
   const email = emailInput.value.trim();
   const password = passwordInput.value;
-  if(!email || !password){ msg.innerText="Preencha todos os campos!"; return; }
+  if(!email||!password){ msg.innerText="Preencha todos os campos!"; return;}
   auth.signInWithEmailAndPassword(email,password).then(cred=>{
     userId = cred.user.uid;
     db.ref("users/"+userId).once("value").then(snap=>{
       userData = snap.val();
-      if(userData.role==='child'){ showDashboard(); loadChildDashboard(); }
-      else { showParent(); loadParentPanel(); }
+      showTrail();
     });
   }).catch(e=>msg.innerText=e.message);
 });
 
-// ================= LOGOUT =================
-logoutChildBtn.addEventListener('click', ()=>auth.signOut().then(showLogin));
-logoutParentBtn.addEventListener('click', ()=>auth.signOut().then(showLogin));
-
-// ================= DASHBOARD CRIANÇA =================
-function loadChildDashboard(){
-  updateXP();
-  renderTasks();
-  renderTrophyPath();
-}
-
-function updateXP(){
-  xpBar.style.width = (userData.xp % 100)+'%';
-  xpBar.innerText = userData.xp+' XP';
-}
-
-function renderTasks(){
-  tasksDiv.innerHTML='';
-  completedTasksDiv.innerHTML='';
+// ================= TRAIL =================
+function renderTrail(){
+  trophyPath.innerHTML="";
   for(let key in userData.tasks){
     const t = userData.tasks[key];
-    const div = document.createElement('div');
-    div.className='task';
-    div.innerHTML = `<span>${t.name} (XP:${t.xp})</span>`;
-    if(!t.done){
-      const btn = document.createElement('button');
-      btn.innerText='✅';
-      btn.onclick = ()=>completeTask(key);
-      div.appendChild(btn);
-      tasksDiv.appendChild(div);
-    } else {
-      completedTasksDiv.innerHTML += `<div>${t.name} ✅</div>`;
+    const node = document.createElement("div");
+    node.className="trophy-node";
+    if(t.done) node.classList.add("completed");
+    node.innerText=t.done?"🏆":"🎯";
+    node.title = `${t.name} (${t.xp} XP)`;
+    trophyPath.appendChild(node);
+  }
+  const level = Math.floor(userData.xp/1000)+1;
+  levelDisplay.innerText = "Lv: "+level;
+}
+
+// ================= ADD MISSION =================
+addIcon.addEventListener("click", showAddMission);
+backBtn.addEventListener("click", showTrail);
+saveMissionBtn.addEventListener("click", ()=>{
+  const name = missionName.value.trim();
+  const xp = parseInt(missionXP.value);
+  if(!name||isNaN(xp)){ alert("Preencha corretamente"); return;}
+  const key = "task_"+Date.now();
+  userData.tasks[key] = {name:name,xp:xp,done:false,date:null};
+  db.ref("users/"+userId).set(userData).then(()=>{
+    missionName.value=""; missionXP.value="";
+    showTrail();
+  });
+});
+
+// ================= HISTORY =================
+historyIcon.addEventListener("click", showHistory);
+backBtnHistory.addEventListener("click", showTrail);
+
+function renderHistory(){
+  historyList.innerHTML="";
+  for(let key in userData.tasks){
+    const t = userData.tasks[key];
+    if(t.done){
+      const date = t.date?new Date(t.date).toLocaleString():"-";
+      historyList.innerHTML += `<div>${t.name} ✅ - Concluída em: ${date} (XP:${t.xp})</div>`;
     }
   }
 }
 
-function completeTask(key){
-  userData.tasks[key].done=true;
+// ================= COMPLETE TASK =================
+trophyPath.addEventListener("click", (e)=>{
+  const nodes = Array.from(trophyPath.children);
+  const index = nodes.indexOf(e.target);
+  if(index<0) return;
+  const key = Object.keys(userData.tasks)[index];
+  if(userData.tasks[key].done) return;
+  userData.tasks[key].done = true;
+  userData.tasks[key].date = Date.now();
   userData.xp += userData.tasks[key].xp;
-  if(userData.xp >=100){ userData.xp-=100; userData.level++; userData.badges.push('🏆 Novo nível!'); }
-  db.ref("users/"+userId).set(userData);
-  loadChildDashboard();
-}
-
-function renderTrophyPath(){
-  trophyPath.innerHTML='';
-  for(let key in userData.tasks){
-    const t = userData.tasks[key];
-    const node = document.createElement('div');
-    node.className='trophy-node';
-    if(t.done) node.classList.add('completed');
-    node.innerText='🏆';
-    trophyPath.appendChild(node);
-  }
-}
-
-// ================= PAINEL PAIS =================
-function loadParentPanel(){
-  childList.innerHTML='';
-  db.ref('users').once('value').then(snapshot=>{
-    snapshot.forEach(child=>{
-      const u = child.val();
-      if(u.role==='child'){
-        const li = document.createElement('li');
-        li.innerText = u.name+' - XP:'+u.xp;
-        childList.appendChild(li);
-      }
-    });
-  });
-}
-
-createTaskBtn.addEventListener('click', ()=>{
-  const email = document.getElementById('childEmail').value.trim();
-  const name = document.getElementById('taskName').value.trim();
-  const xp = parseInt(document.getElementById('taskXP').value);
-  if(!email || !name || isNaN(xp)){ alert('Preencha todos os campos'); return; }
-  db.ref('users').orderByChild('email').equalTo(email).once('value').then(snapshot=>{
-    snapshot.forEach(child=>{
-      const u = child.val();
-      const key = 'task_'+Date.now();
-      u.tasks[key]={name:name,xp:xp,done:false};
-      db.ref('users/'+child.key).set(u);
-      alert('Tarefa criada!');
-    });
-  });
+  db.ref("users/"+userId).set(userData).then(renderTrail);
 });
+
 </script>
 </body>
 </html>
