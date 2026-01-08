@@ -170,7 +170,7 @@ function completeUserTask(index){
   updateUI();
 }
 
-// Completa desafio global
+// Completa desafio global (não remove da lista)
 function completeGlobalTask(taskId,xp){
   userData.xp += xp;
   if(userData.xp >=100){ userData.xp -=100; userData.level++; }
