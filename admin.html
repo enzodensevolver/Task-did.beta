@@ -1,8 +1,42 @@
 <!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><title>Admin</title></head>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Admin</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_PROJETO.firebaseapp.com",
+  projectId: "SEU_PROJETO"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+</script>
+</head>
+
 <body>
-<h2>👑 Admin</h2>
-<p>Usuários e desafios</p>
+<h2>👑 Painel Admin</h2>
+<ul id="list"></ul>
+
+<script>
+auth.onAuthStateChanged(u=>{
+if(!u){location="index.html";return;}
+db.collection("users").doc(u.uid).get().then(d=>{
+if(d.data().role!=="admin"){alert("Acesso negado");location="dashboard.html";}
+});
+db.collection("users").onSnapshot(s=>{
+list.innerHTML="";
+s.forEach(d=>{
+let u=d.data();
+list.innerHTML+=`<li>${u.name} - XP:${u.xp} - Lv:${u.level}</li>`;
+});
+});
+</script>
 </body>
 </html>
