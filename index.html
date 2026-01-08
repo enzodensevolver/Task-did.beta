@@ -18,7 +18,7 @@ button{cursor:pointer;border:none;font-weight:bold;}
 @keyframes pop{from{transform:scale(0);}to{transform:scale(1);}}
 .progress-bar{width:100%;background:#ddd;border-radius:10px;overflow:hidden;margin:10px 0;height:20px;}
 .progress-fill{height:100%;width:0;background:#22c55e;text-align:right;padding-right:5px;color:white;font-weight:bold;border-radius:10px;transition: width 0.5s ease;}
-.trophy-path{display:flex;justify-content:space-between;margin:20px 0;}
+.trophy-path{display:flex;justify-content:space-between;margin:20px 0;overflow-x:auto;}
 .trophy-node{width:50px;height:50px;border-radius:50%;background:#ddd;display:flex;justify-content:center;align-items:center;font-size:24px;transition:background 0.5s;}
 .trophy-node.completed{background:#f59e0b;color:white;}
 #completedTasks{margin-top:20px;text-align:left;}
@@ -67,14 +67,13 @@ button{cursor:pointer;border:none;font-weight:bold;}
 <button class="btn-logout" id="logoutParentBtn">🚪 Sair</button>
 </div>
 
-<!-- Firebase v9+ -->
-<script type="module">
-// Importando o Firebase Modular
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-import { getDatabase, ref, set, get, child, update, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+<!-- Firebase v8 compatível direto -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-// Configuração do Firebase
+<script>
+// ================= FIREBASE CONFIG =================
 const firebaseConfig = {
   apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
   authDomain: "sua-rotina-em-um-site.firebaseapp.com",
@@ -84,13 +83,11 @@ const firebaseConfig = {
   messagingSenderId: "774359583618",
   appId: "1:774359583618:web:3ccf1600d1ab1dc6eadd9b"
 };
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
 
-// Inicializando Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
-
-// Elementos
+// ================= ELEMENTOS =================
 const loginCard = document.getElementById("loginCard");
 const dashboardCard = document.getElementById("dashboardCard");
 const parentCard = document.getElementById("parentCard");
@@ -113,21 +110,18 @@ const createTaskBtn = document.getElementById("createTaskBtn");
 let userId, userData;
 
 // ================= AUTH STATE =================
-onAuthStateChanged(auth, (user) => {
+auth.onAuthStateChanged(user => {
   if(!user){ showLogin(); return; }
   userId = user.uid;
-  get(child(ref(db), 'users/'+userId)).then((snapshot) => {
-    if(snapshot.exists()){
-      userData = snapshot.val();
-      if(userData.role==='child'){ showDashboard(); loadChildDashboard(); }
-      else { showParent(); loadParentPanel(); }
-    } else {
+  db.ref("users/"+userId).once("value").then(snap=>{
+    userData = snap.val();
+    if(!userData){
       const role = roleSelect.value;
       userData = {name:nameInput.value,email:emailInput.value,role:role,xp:0,level:1,tasks:{},badges:[]};
-      set(ref(db, 'users/'+userId), userData);
-      if(role==='child'){ showDashboard(); loadChildDashboard(); }
-      else { showParent(); loadParentPanel(); }
+      db.ref("users/"+userId).set(userData);
     }
+    if(userData.role==='child'){ showDashboard(); loadChildDashboard(); }
+    else { showParent(); loadParentPanel(); }
   });
 });
 
@@ -143,13 +137,13 @@ registerBtn.addEventListener('click', ()=>{
   const password = passwordInput.value;
   const role = roleSelect.value;
   if(!name || !email || !password){ msg.innerText = "Preencha todos os campos!"; return; }
-  createUserWithEmailAndPassword(auth, email, password).then((cred)=>{
+  auth.createUserWithEmailAndPassword(email,password).then(cred=>{
     userId = cred.user.uid;
     userData = {name,email,role,xp:0,level:1,tasks:{},badges:[]};
-    set(ref(db, 'users/'+userId), userData);
+    db.ref("users/"+userId).set(userData);
     if(role==='child'){ showDashboard(); loadChildDashboard(); }
     else { showParent(); loadParentPanel(); }
-  }).catch((e)=>msg.innerText=e.message);
+  }).catch(e=>msg.innerText=e.message);
 });
 
 // ================= LOGIN =================
@@ -157,21 +151,21 @@ loginBtn.addEventListener('click', ()=>{
   const email = emailInput.value.trim();
   const password = passwordInput.value;
   if(!email || !password){ msg.innerText="Preencha todos os campos!"; return; }
-  signInWithEmailAndPassword(auth, email, password).then((cred)=>{
+  auth.signInWithEmailAndPassword(email,password).then(cred=>{
     userId = cred.user.uid;
-    get(child(ref(db), 'users/'+userId)).then((snapshot)=>{
-      userData = snapshot.val();
+    db.ref("users/"+userId).once("value").then(snap=>{
+      userData = snap.val();
       if(userData.role==='child'){ showDashboard(); loadChildDashboard(); }
       else { showParent(); loadParentPanel(); }
     });
-  }).catch((e)=>msg.innerText=e.message);
+  }).catch(e=>msg.innerText=e.message);
 });
 
 // ================= LOGOUT =================
-logoutChildBtn.addEventListener('click', ()=>signOut(auth).then(showLogin));
-logoutParentBtn.addEventListener('click', ()=>signOut(auth).then(showLogin));
+logoutChildBtn.addEventListener('click', ()=>auth.signOut().then(showLogin));
+logoutParentBtn.addEventListener('click', ()=>auth.signOut().then(showLogin));
 
-// ================= DASHBOARD =================
+// ================= DASHBOARD CRIANÇA =================
 function loadChildDashboard(){
   updateXP();
   renderTasks();
@@ -207,8 +201,13 @@ function completeTask(key){
   userData.tasks[key].done=true;
   userData.xp += userData.tasks[key].xp;
   if(userData.xp >=100){ userData.xp-=100; userData.level++; userData.badges.push('🏆 Novo nível!'); }
-  set(ref(db, 'users/'+userId), userData);
+  db.ref("users/"+userId).set(userData);
   loadChildDashboard();
+  const node = document.createElement('div');
+  node.className='badge';
+  node.innerText='🏆';
+  document.body.appendChild(node);
+  setTimeout(()=>node.remove(),1000);
 }
 
 function renderTrophyPath(){
@@ -226,9 +225,9 @@ function renderTrophyPath(){
 // ================= PAINEL PAIS =================
 function loadParentPanel(){
   childList.innerHTML='';
-  get(ref(db, 'users')).then(snapshot=>{
-    snapshot.forEach(childSnap=>{
-      const u = childSnap.val();
+  db.ref('users').once('value').then(snapshot=>{
+    snapshot.forEach(child=>{
+      const u = child.val();
       if(u.role==='child'){
         const li = document.createElement('li');
         li.innerText = u.name+' - XP:'+u.xp;
@@ -243,13 +242,12 @@ createTaskBtn.addEventListener('click', ()=>{
   const name = document.getElementById('taskName').value.trim();
   const xp = parseInt(document.getElementById('taskXP').value);
   if(!email || !name || isNaN(xp)){ alert('Preencha todos os campos'); return; }
-  const usersRef = query(ref(db,'users'), orderByChild('email'), equalTo(email));
-  get(usersRef).then(snapshot=>{
-    snapshot.forEach(childSnap=>{
-      const u = childSnap.val();
+  db.ref('users').orderByChild('email').equalTo(email).once('value').then(snapshot=>{
+    snapshot.forEach(child=>{
+      const u = child.val();
       const key = 'task_'+Date.now();
       u.tasks[key]={name:name,xp:xp,done:false};
-      set(ref(db,'users/'+childSnap.key), u);
+      db.ref('users/'+child.key).set(u);
       alert('Tarefa criada!');
     });
   });
