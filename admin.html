@@ -2,13 +2,14 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Admin</title>
+<title>Admin - Painel Personalizável</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
 <script>
+// Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
   authDomain: "sua-rotina-em-um-site.firebaseapp.com",
@@ -24,35 +25,131 @@ const db = firebase.firestore();
 
 <style>
 body{font-family:Arial;background:#f0f0f0;margin:0;padding:20px;}
-h2{text-align:center;}
-ul{list-style:none;padding:0;}
-li{background:white;padding:10px;margin:5px 0;border-radius:8px;box-shadow:0 3px 6px rgba(0,0,0,.1);}
+h2{text-align:center;margin-bottom:10px;}
+.card{background:white;padding:15px;margin-bottom:15px;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,.1);}
+ul{list-style:none;padding:0;margin:0;}
+li{background:#fafafa;padding:10px;margin:5px 0;border-radius:8px;display:flex;justify-content:space-between;align-items:center;}
+button{margin-left:5px;padding:5px 10px;border:none;border-radius:5px;cursor:pointer;}
+input{padding:5px;margin:5px;border-radius:5px;border:1px solid #ccc;}
 </style>
 </head>
 
 <body>
-<h2>👑 Painel Admin</h2>
-<ul id="list"></ul>
+<h2>👑 Painel Admin Personalizável</h2>
+
+<div class="card">
+  <h3>Adicionar Desafio Global</h3>
+  <input id="globalTaskName" placeholder="Nome do desafio (ex: 💪 Exercício)">
+  <input id="globalTaskXP" type="number" placeholder="XP">
+  <button style="background:#6366f1;color:white;" onclick="addGlobalTask()">➕ Adicionar</button>
+</div>
+
+<div class="card">
+  <h3>Desafios Globais</h3>
+  <ul id="globalTasksList"></ul>
+</div>
+
+<div class="card">
+  <h3>Usuários</h3>
+  <ul id="usersList"></ul>
+</div>
 
 <script>
-auth.onAuthStateChanged(u=>{
-  if(!u){location="index.html"; return;}
-  db.collection("users").doc(u.uid).get().then(d=>{
-    if(d.data().role!=="admin"){
-      alert("Acesso negado!");
-      location="dashboard.html";
-    }
-  });
-
-  db.collection("users").onSnapshot(s=>{
-    const list = document.getElementById("list");
-    list.innerHTML="";
-    s.forEach(d=>{
-      const u = d.data();
-      list.innerHTML+=`<li>${u.name} - XP:${u.xp} - Lv:${u.level} - Role:${u.role}</li>`;
-    });
+let currentUser;
+auth.onAuthStateChanged(user=>{
+  if(!user){location="index.html";return;}
+  currentUser = user;
+  db.collection("users").doc(user.uid).get().then(doc=>{
+    if(doc.data().role!=="admin"){alert("Acesso negado!"); location="dashboard.html";}
+    initAdmin();
   });
 });
+
+// Inicializa painel admin
+function initAdmin(){
+  loadGlobalTasks();
+  loadUsers();
+}
+
+// =====================
+// DESAFIOS GLOBAIS
+// =====================
+function loadGlobalTasks(){
+  db.collection("globalTasks").onSnapshot(snap=>{
+    const list = document.getElementById("globalTasksList");
+    list.innerHTML="";
+    snap.forEach(doc=>{
+      const task = doc.data();
+      const li = document.createElement("li");
+      li.innerHTML=`${task.name} (XP:${task.xp}) 
+        <span>
+          <button onclick="editGlobalTask('${doc.id}')">✏️</button>
+          <button onclick="deleteGlobalTask('${doc.id}')">🗑️</button>
+        </span>`;
+      list.appendChild(li);
+    });
+  });
+}
+
+function addGlobalTask(){
+  const name = document.getElementById("globalTaskName").value.trim();
+  const xp = parseInt(document.getElementById("globalTaskXP").value);
+  if(!name || isNaN(xp)) return alert("Preencha nome e XP!");
+  db.collection("globalTasks").add({name,xp});
+  document.getElementById("globalTaskName").value="";
+  document.getElementById("globalTaskXP").value="";
+}
+
+// Edita desafio global
+function editGlobalTask(id){
+  db.collection("globalTasks").doc(id).get().then(doc=>{
+    const name = prompt("Editar nome:",doc.data().name);
+    const xp = prompt("Editar XP:",doc.data().xp);
+    if(name && !isNaN(parseInt(xp))){
+      db.collection("globalTasks").doc(id).update({name, xp: parseInt(xp)});
+    }
+  });
+}
+
+// Deleta desafio global
+function deleteGlobalTask(id){
+  if(confirm("Deseja deletar este desafio global?")){
+    db.collection("globalTasks").doc(id).delete();
+  }
+}
+
+// =====================
+// USUÁRIOS
+// =====================
+function loadUsers(){
+  db.collection("users").onSnapshot(snap=>{
+    const list = document.getElementById("usersList");
+    list.innerHTML="";
+    snap.forEach(doc=>{
+      const user = doc.data();
+      const li = document.createElement("li");
+      li.innerHTML=`${user.name} - Lv:${user.level} - XP:${user.xp} 
+        <span>
+          <button onclick="viewUserTasks('${doc.id}')">👀 Tarefas</button>
+        </span>`;
+      list.appendChild(li);
+    });
+  });
+}
+
+// Visualizar tarefas do usuário
+function viewUserTasks(uid){
+  db.collection("users").doc(uid).get().then(doc=>{
+    const user = doc.data();
+    let msg = `Tarefas de ${user.name}:\n`;
+    if(user.tasks && user.tasks.length>0){
+      user.tasks.forEach(t=>{ msg += `- ${t.name} (XP:${t.xp})\n`; });
+    }else{
+      msg += "Nenhuma tarefa!";
+    }
+    alert(msg);
+  });
+}
 </script>
 </body>
 </html>
