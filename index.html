@@ -8,12 +8,8 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
+<script>
+// Configuração do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
   authDomain: "sua-rotina-em-um-site.firebaseapp.com",
@@ -22,17 +18,13 @@ const firebaseConfig = {
   messagingSenderId: "774359583618",
   appId: "1:774359583618:web:3ccf1600d1ab1dc6eadd9b"
 };
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
 firebase.initializeApp(firebaseConfig);
-
 const auth = firebase.auth();
 const db = firebase.firestore();
 </script>
 
 <style>
-*{box-sizing:border-box}
+*{box-sizing:border-box;}
 body{
   margin:0;
   min-height:100vh;
@@ -56,13 +48,8 @@ body{
   from{opacity:0;transform:translateY(15px)}
   to{opacity:1;transform:none}
 }
-h1{
-  margin:0 0 10px;
-}
-p{
-  margin:0 0 20px;
-  color:#555;
-}
+h1{margin:0 0 10px;}
+p{margin:0 0 20px;color:#555;}
 input{
   width:100%;
   padding:12px;
@@ -80,25 +67,14 @@ button{
   font-size:16px;
   cursor:pointer;
 }
-.btn-create{
-  background:#22c55e;
-  color:white;
-}
-.btn-login{
-  background:#6366f1;
-  color:white;
-}
-#msg{
-  margin-top:10px;
-  color:#ef4444;
-}
+.btn-create{background:#22c55e;color:white;}
+.btn-login{background:#6366f1;color:white;}
+#msg{margin-top:10px;color:#ef4444;}
 </style>
 </head>
 
 <body>
-
 <div class="card" id="app">
-
 <h1>🚀 Minha Rotina</h1>
 <p>Crie hábitos, ganhe XP e evolua</p>
 
@@ -110,22 +86,28 @@ button{
 <button class="btn-login" onclick="login()">Entrar</button>
 
 <p id="msg"></p>
-
 </div>
 
 <script>
 const msg = document.getElementById("msg");
-const appDiv = document.getElementById("app");
+const nameInput = document.getElementById("name");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
 
 function register(){
-  auth.createUserWithEmailAndPassword(email.value,password.value)
+  if(!nameInput.value || !emailInput.value || !passwordInput.value){
+    msg.innerText = "Preencha todos os campos!";
+    return;
+  }
+  auth.createUserWithEmailAndPassword(emailInput.value,passwordInput.value)
   .then(cred=>{
     db.collection("users").doc(cred.user.uid).set({
-      name:name.value,
-      email:email.value,
-      xp:0,
-      level:1,
-      lang:"pt"
+      name: nameInput.value,
+      email: emailInput.value,
+      xp: 0,
+      level: 1,
+      lang: "pt",
+      role: "user" // padrão todo usuário é user
     });
     window.location="dashboard.html";
   })
@@ -133,13 +115,14 @@ function register(){
 }
 
 function login(){
-  auth.signInWithEmailAndPassword(email.value,password.value)
-  .then(()=>{
-    window.location="dashboard.html";
-  })
+  if(!emailInput.value || !passwordInput.value){
+    msg.innerText = "Preencha todos os campos!";
+    return;
+  }
+  auth.signInWithEmailAndPassword(emailInput.value,passwordInput.value)
+  .then(()=>{window.location="dashboard.html";})
   .catch(e=>msg.innerText=e.message);
 }
 </script>
-
 </body>
 </html>
