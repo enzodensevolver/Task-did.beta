@@ -15,61 +15,138 @@ const firebaseConfig = {
   projectId: "SEU_PROJETO"
 };
 firebase.initializeApp(firebaseConfig);
+
 const auth = firebase.auth();
 const db = firebase.firestore();
 </script>
 
 <style>
-body{margin:0;font-family:Arial;background:#22c55e;height:100vh;display:flex;justify-content:center;align-items:center}
-#box{background:#fff;padding:25px;border-radius:15px;width:360px}
+body{
+  margin:0;
+  font-family:Arial;
+  background:linear-gradient(135deg,#6366f1,#22c55e);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+.card{
+  background:white;
+  padding:25px;
+  border-radius:15px;
+  width:100%;
+  max-width:420px;
+  box-shadow:0 10px 30px rgba(0,0,0,.2);
+}
+button{
+  width:100%;
+  padding:10px;
+  margin-top:8px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
 </style>
 </head>
 
 <body>
-<div id="box">
-<h2>🎮 Progresso</h2>
-<p id="lvl"></p>
-<p id="xp"></p>
 
-<label><input type="checkbox" id="treinar"> Treinar</label><br>
-<label><input type="checkbox" id="ler"> Ler</label><br>
-<label><input type="checkbox" id="estudar"> Estudar</label><br><br>
+<div class="card">
+  <h2 id="title">🎮 Meu Progresso</h2>
 
-<button onclick="logout()">Sair</button>
+  <select id="lang" onchange="changeLang()" style="width:100%;padding:8px">
+    <option value="pt">🇧🇷 Português</option>
+    <option value="en">🇺🇸 English</option>
+    <option value="es">🇪🇸 Español</option>
+  </select>
+
+  <p id="levelText"></p>
+  <p id="xpText"></p>
+
+  <button onclick="completeTask()" style="background:#22c55e;color:white">
+    ✅ Concluir desafio
+  </button>
+
+  <button onclick="logout()" style="background:#ef4444;color:white">
+    🚪 Sair
+  </button>
 </div>
 
 <script>
-let ref,xp=0,level=1;
+const texts = {
+  pt:{
+    title:"🎮 Meu Progresso",
+    level:"Nível",
+    xp:"XP",
+    task:"Desafio concluído! +10 XP"
+  },
+  en:{
+    title:"🎮 My Progress",
+    level:"Level",
+    xp:"XP",
+    task:"Challenge completed! +10 XP"
+  },
+  es:{
+    title:"🎮 Mi Progreso",
+    level:"Nivel",
+    xp:"XP",
+    task:"¡Desafío completado! +10 XP"
+  }
+};
 
-auth.onAuthStateChanged(u=>{
-if(!u){location="index.html";return;}
-ref=db.collection("users").doc(u.uid);
-ref.get().then(d=>{
-let data=d.data();
-xp=data.xp; level=data.level;
-lvl.innerText="⭐ Nível: "+level;
-xpEl();
-if(data.challenges){
-treinar.checked=data.challenges.treinar||false;
-ler.checked=data.challenges.ler||false;
-estudar.checked=data.challenges.estudar||false;
-}
+let userId, userData, currentLang="pt";
+
+auth.onAuthStateChanged(user=>{
+  if(!user){
+    window.location="index.html";
+    return;
+  }
+  userId = user.uid;
+  loadData();
 });
-});
 
-function xpEl(){xp.innerText="⚡ XP: "+xp;}
-
-function save(task,val){
-if(val){xp+=10;if(xp>=50){xp-=50;level++;}}
-lvl.innerText="⭐ Nível: "+level; xpEl();
-ref.update({xp,level,[`challenges.${task}`]:val});
+function loadData(){
+  db.collection("users").doc(userId).get().then(doc=>{
+    userData = doc.data();
+    currentLang = userData.lang || "pt";
+    document.getElementById("lang").value = currentLang;
+    updateUI();
+  });
 }
 
-treinar.onchange=()=>save("treinar",treinar.checked);
-ler.onchange=()=>save("ler",ler.checked);
-estudar.onchange=()=>save("estudar",estudar.checked);
+function updateUI(){
+  const t = texts[currentLang];
+  title.innerText = t.title;
+  levelText.innerText = `${t.level}: ${userData.level}`;
+  xpText.innerText = `${t.xp}: ${userData.xp}`;
+}
 
-function logout(){auth.signOut().then(()=>location="index.html");}
+function changeLang(){
+  currentLang = lang.value;
+  db.collection("users").doc(userId).update({ lang: currentLang });
+  updateUI();
+}
+
+function completeTask(){
+  userData.xp += 10;
+  if(userData.xp >= 100){
+    userData.xp = 0;
+    userData.level++;
+  }
+
+  db.collection("users").doc(userId).update({
+    xp:userData.xp,
+    level:userData.level
+  });
+
+  alert(texts[currentLang].task);
+  updateUI();
+}
+
+function logout(){
+  auth.signOut();
+}
 </script>
+
 </body>
 </html>
