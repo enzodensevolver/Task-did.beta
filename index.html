@@ -79,22 +79,49 @@ Entrar
 const appDiv = document.getElementById("app");
 const msg = document.getElementById("msg");
 
+const nameInput = document.getElementById("name");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+
 function register(){
-  auth.createUserWithEmailAndPassword(email.value, password.value)
+  msg.innerText = "";
+
+  if(!nameInput.value || !emailInput.value || !passwordInput.value){
+    msg.innerText = "Preencha todos os campos";
+    return;
+  }
+
+  auth.createUserWithEmailAndPassword(
+    emailInput.value,
+    passwordInput.value
+  )
   .then(cred=>{
-    db.collection("users").doc(cred.user.uid).set({
-      name: name.value,
-      email: email.value,
+    return db.collection("users").doc(cred.user.uid).set({
+      name: nameInput.value,
+      email: emailInput.value,
       xp: 0,
-      level: 1
+      level: 1,
+      createdAt: new Date()
     });
+  })
+  .then(()=>{
     appDiv.innerHTML = "<h2>🎉 Conta criada com sucesso!</h2>";
   })
   .catch(e=>msg.innerText = e.message);
 }
 
 function login(){
-  auth.signInWithEmailAndPassword(email.value, password.value)
+  msg.innerText = "";
+
+  if(!emailInput.value || !passwordInput.value){
+    msg.innerText = "Informe email e senha";
+    return;
+  }
+
+  auth.signInWithEmailAndPassword(
+    emailInput.value,
+    passwordInput.value
+  )
   .then(()=>{
     appDiv.innerHTML = "<h2>✅ Login realizado!</h2>";
   })
