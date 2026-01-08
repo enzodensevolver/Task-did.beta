@@ -4,12 +4,13 @@
 <meta charset="UTF-8">
 <title>Minha Rotina</title>
 
+<!-- Firebase 8 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
 <script>
-// Firebase
+// Config Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
   authDomain: "sua-rotina-em-um-site.firebaseapp.com",
@@ -19,6 +20,7 @@ const firebaseConfig = {
   appId: "1:774359583618:web:3ccf1600d1ab1dc6eadd9b"
 };
 firebase.initializeApp(firebaseConfig);
+
 const auth = firebase.auth();
 const db = firebase.firestore();
 </script>
@@ -69,7 +71,7 @@ button{
 </head>
 
 <body>
-<div class="card" id="app">
+<div class="card">
 <h1>🚀 Minha Rotina</h1>
 <p>Crie hábitos, ganhe XP e evolua</p>
 
@@ -96,7 +98,7 @@ const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
 const langSelect = document.getElementById("langSelect");
 
-const ADMIN_EMAIL = "enzo.n.sabino@gmail.com"; // email do admin
+const ADMIN_EMAIL = "enzo.n.sabino@gmail.com";
 
 function register(){
   const name = nameInput.value.trim();
@@ -112,7 +114,6 @@ function register(){
   auth.createUserWithEmailAndPassword(email,password)
   .then(cred=>{
     const role = email === ADMIN_EMAIL ? "admin" : "user";
-    // Salva o usuário no Firestore e espera terminar antes de redirecionar
     return db.collection("users").doc(cred.user.uid).set({
       name,
       email,
@@ -121,7 +122,7 @@ function register(){
       lang,
       role,
       tasks:[]
-    }).then(()=> role); // retorna o role para usar no redirecionamento
+    }).then(()=> role);
   })
   .then(role=>{
     window.location = role === "admin" ? "admin.html" : "dashboard.html";
@@ -139,7 +140,6 @@ function login(){
 
   auth.signInWithEmailAndPassword(email,password)
   .then(cred=>{
-    // Carrega dados do usuário
     return db.collection("users").doc(cred.user.uid).get();
   })
   .then(doc=>{
