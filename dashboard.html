@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Dashboard</title>
+<title>Dashboard Personalizável</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -26,7 +26,7 @@ const db = firebase.firestore();
 <style>
 body{
   margin:0;
-  font-family:Arial;
+  font-family:Arial,sans-serif;
   background:linear-gradient(135deg,#6366f1,#22c55e);
   min-height:100vh;
   display:flex;
@@ -38,82 +38,166 @@ body{
   padding:25px;
   border-radius:15px;
   width:100%;
-  max-width:420px;
+  max-width:550px;
   box-shadow:0 10px 30px rgba(0,0,0,.2);
   text-align:center;
 }
+h2{margin-bottom:15px;}
+select,input{margin-bottom:10px;padding:8px;width:100%;border-radius:8px;}
 button{
   width:100%;
   padding:10px;
-  margin-top:8px;
+  margin:5px 0;
   border:none;
   border-radius:8px;
   cursor:pointer;
+  font-weight:bold;
 }
+.task{
+  background:#f0f0f0;
+  margin:5px 0;
+  padding:10px;
+  border-radius:8px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.task button{
+  width:auto;
+  padding:5px 10px;
+  font-size:14px;
+}
+.reward{font-size:18px;margin:8px 0;}
 </style>
 </head>
 
 <body>
 <div class="card">
-  <h2 id="title">🎮 Meu Progresso</h2>
+  <h2 id="title">🎯 Dashboard Personalizável</h2>
 
-  <select id="lang" onchange="changeLang()" style="width:100%;padding:8px;margin-bottom:10px;">
+  <select id="lang" onchange="changeLang()">
     <option value="pt">🇧🇷 Português</option>
     <option value="en">🇺🇸 English</option>
     <option value="es">🇪🇸 Español</option>
   </select>
 
-  <p id="levelText"></p>
-  <p id="xpText"></p>
+  <div class="reward" id="levelReward"></div>
+  <div class="reward" id="xpReward"></div>
 
-  <button onclick="completeTask()" style="background:#22c55e;color:white">✅ Concluir desafio</button>
-  <button onclick="logout()" style="background:#ef4444;color:white">🚪 Sair</button>
+  <h3>Adicionar / Editar Desafio</h3>
+  <input id="taskInput" placeholder="Tarefa (ex: 💪 Exercício)">
+  <input id="xpInput" type="number" placeholder="XP da tarefa">
+  <button style="background:#6366f1;color:white;" onclick="addCustomTask()">➕ Adicionar</button>
+
+  <div id="tasks"></div>
+
+  <button onclick="logout()" style="background:#ef4444;color:white;margin-top:15px;">🚪 Sair</button>
 </div>
 
 <script>
+// Textos para idiomas
 const texts = {
-  pt:{title:"🎮 Meu Progresso",level:"Nível",xp:"XP",task:"Desafio concluído! +10 XP"},
-  en:{title:"🎮 My Progress",level:"Level",xp:"XP",task:"Challenge completed! +10 XP"},
-  es:{title:"🎮 Mi Progreso",level:"Nivel",xp:"XP",task:"¡Desafío completado! +10 XP"}
+  pt:{title:"🎯 Dashboard Personalizável",level:"Nível",xp:"XP",complete:"Concluído! +XP",newTask:"Nova tarefa adicionada"},
+  en:{title:"🎯 Custom Dashboard",level:"Level",xp:"XP",complete:"Completed! +XP",newTask:"New task added"},
+  es:{title:"🎯 Panel Personalizable",level:"Nivel",xp:"XP",complete:"¡Completado! +XP",newTask:"Nueva tarea añadida"}
 };
 
 let userId, userData, currentLang="pt";
+const taskList = document.getElementById("tasks");
+const levelReward = document.getElementById("levelReward");
+const xpReward = document.getElementById("xpReward");
+
+// Verifica login
 auth.onAuthStateChanged(user=>{
   if(!user){window.location="index.html";return;}
   userId = user.uid;
   loadData();
 });
 
+// Carrega dados do usuário
 function loadData(){
   db.collection("users").doc(userId).get().then(doc=>{
     userData = doc.data();
     currentLang = userData.lang || "pt";
     document.getElementById("lang").value = currentLang;
+    if(!userData.tasks) userData.tasks = [];
     updateUI();
   });
 }
 
+// Atualiza UI
 function updateUI(){
   const t = texts[currentLang];
-  title.innerText = t.title;
-  levelText.innerText = `${t.level}: ${userData.level}`;
-  xpText.innerText = `${t.xp}: ${userData.xp}`;
+  document.getElementById("title").innerText = t.title;
+  levelReward.innerText = `${t.level}: ${userData.level}`;
+  xpReward.innerText = `${t.xp}: ${userData.xp}`;
+
+  // Lista de tarefas
+  taskList.innerHTML="";
+  userData.tasks.forEach((task,i)=>{
+    const div = document.createElement("div");
+    div.className="task";
+    div.innerHTML=`<span>${task.name} (XP:${task.xp})</span>
+      <div>
+        <button onclick="completeTask(${i})">✅</button>
+        <button onclick="editTask(${i})">✏️</button>
+        <button onclick="deleteTask(${i})">🗑️</button>
+      </div>`;
+    taskList.appendChild(div);
+  });
 }
 
+// Muda idioma
 function changeLang(){
-  currentLang = lang.value;
-  db.collection("users").doc(userId).update({ lang: currentLang });
+  currentLang = document.getElementById("lang").value;
+  db.collection("users").doc(userId).update({lang:currentLang});
   updateUI();
 }
 
-function completeTask(){
-  userData.xp += 10;
-  if(userData.xp >= 100){ userData.xp = 0; userData.level++; }
-  db.collection("users").doc(userId).update({ xp:userData.xp, level:userData.level });
-  alert(texts[currentLang].task);
+// Adiciona tarefa personalizada
+function addCustomTask(){
+  const name = document.getElementById("taskInput").value.trim();
+  const xp = parseInt(document.getElementById("xpInput").value);
+  if(!name || isNaN(xp)) return alert("Preencha tarefa e XP!");
+  userData.tasks.push({name,xp});
+  db.collection("users").doc(userId).update({tasks:userData.tasks});
+  document.getElementById("taskInput").value="";
+  document.getElementById("xpInput").value="";
   updateUI();
 }
 
+// Completa tarefa
+function completeTask(index){
+  const task = userData.tasks[index];
+  userData.xp += task.xp;
+  if(userData.xp>=100){ userData.xp-=100; userData.level++; }
+  userData.tasks.splice(index,1);
+  db.collection("users").doc(userId).update({xp:userData.xp,level:userData.level,tasks:userData.tasks});
+  alert(`${texts[currentLang].complete} +${task.xp} XP`);
+  updateUI();
+}
+
+// Edita tarefa
+function editTask(index){
+  const newName = prompt("Editar tarefa:",userData.tasks[index].name);
+  const newXp = prompt("Editar XP:",userData.tasks[index].xp);
+  if(newName && !isNaN(parseInt(newXp))){
+    userData.tasks[index] = {name:newName,xp:parseInt(newXp)};
+    db.collection("users").doc(userId).update({tasks:userData.tasks});
+    updateUI();
+  }
+}
+
+// Deleta tarefa
+function deleteTask(index){
+  if(confirm("Deseja realmente deletar esta tarefa?")){
+    userData.tasks.splice(index,1);
+    db.collection("users").doc(userId).update({tasks:userData.tasks});
+    updateUI();
+  }
+}
+
+// Logout
 function logout(){ auth.signOut().then(()=>window.location="index.html"); }
 </script>
 </body>
