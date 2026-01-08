@@ -15,11 +15,11 @@ body{margin:0;font-family:Arial;background:#ccefc4;overflow:hidden;}
 .counter{background:#6366f1;color:white;padding:2px 6px;border-radius:8px;margin-left:5px;font-size:12px;}
 #addMissionBtn{position:absolute;top:20px;right:20px;font-size:28px;cursor:pointer;}
 #backBtn{position:absolute;top:20px;left:20px;font-size:24px;cursor:pointer;cursor:pointer;}
-.card{position:absolute;width:90%;max-width:600px;background:white;border-radius:20px;padding:20px;box-shadow:0 15px 35px rgba(0,0,0,0.3);top:50%;left:50%;transform:translate(-50%,-50%);}
-input,button{padding:10px;margin:5px;border-radius:8px;border:1px solid #ccc;font-size:16px;}
-button{cursor:pointer;}
-table{width:100%;border-collapse:collapse;}
+.card{position:absolute;width:95%;max-width:800px;background:white;border-radius:20px;padding:20px;box-shadow:0 15px 35px rgba(0,0,0,0.3);top:50%;left:50%;transform:translate(-50%,-50%);}
+table{width:100%;border-collapse:collapse;margin-top:10px;}
 th,td{border:1px solid #ccc;padding:8px;text-align:left;}
+input,button{padding:8px;margin:4px;border-radius:6px;border:1px solid #ccc;font-size:14px;}
+button{cursor:pointer;}
 </style>
 </head>
 <body>
@@ -42,19 +42,23 @@ th,td{border:1px solid #ccc;padding:8px;text-align:left;}
 <button id="completeBtn">Concluir</button>
 </div>
 
-<!-- ADD MISSION -->
+<!-- PLANILHA DE MISSÕES -->
 <div class="card" id="addMissionCard" style="display:none;">
 <div id="backBtn">⬅ Voltar</div>
-<h3>Adicionar Missão</h3>
-<table>
-<tr><th>Missão</th><th>XP</th><th>Horário</th><th>Ação</th></tr>
+<h3>Planilha de Missões</h3>
+<table id="missionsTable">
 <tr>
-<td><input id="missionName" placeholder="Nome da missão"></td>
-<td><input type="number" id="missionXP" placeholder="XP"></td>
-<td><input type="time" id="missionTime"></td>
-<td><button id="saveMissionBtn" style="background:#22c55e;color:white;">Salvar</button></td>
+<th>Nome da Missão</th>
+<th>XP</th>
+<th>Horário</th>
+<th>Ação</th>
 </tr>
 </table>
+<h4>Adicionar Nova Missão</h4>
+<input id="missionName" placeholder="Nome da missão">
+<input type="number" id="missionXP" placeholder="XP">
+<input type="time" id="missionTime">
+<button id="saveMissionBtn" style="background:#22c55e;color:white;">Salvar</button>
 </div>
 
 <!-- FIREBASE 8 -->
@@ -95,6 +99,7 @@ const missionTime = document.getElementById("missionTime");
 
 const completeBtn = document.getElementById("completeBtn");
 const completedList = document.getElementById("completedList");
+const missionsTable = document.getElementById("missionsTable");
 
 let userId, userData;
 let selectedTaskKey = null;
@@ -102,7 +107,7 @@ let selectedTaskKey = null;
 // ================= SHOW FUNCTIONS =================
 function showLogin(){ loginCard.style.display="block"; trailContainer.style.display="none"; addMissionCard.style.display="none";}
 function showTrail(){ loginCard.style.display="none"; trailContainer.style.display="block"; addMissionCard.style.display="none"; renderTrail(); renderCompleted();}
-function showAddMission(){ loginCard.style.display="none"; trailContainer.style.display="none"; addMissionCard.style.display="block";}
+function showAddMission(){ loginCard.style.display="none"; trailContainer.style.display="none"; addMissionCard.style.display="block"; renderMissionSheet();}
 
 // ================= AUTH =================
 document.getElementById("registerBtn").onclick = ()=>{
@@ -126,7 +131,6 @@ document.getElementById("loginBtn").onclick = ()=>{
     userId = cred.user.uid;
     db.ref("users/"+userId).once("value").then(snap=>{
       userData = snap.val();
-      // Daily reset at login
       dailyReset();
       showTrail();
     });
@@ -136,6 +140,7 @@ document.getElementById("loginBtn").onclick = ()=>{
 // ================= ADD MISSION =================
 addMissionBtn.onclick = showAddMission;
 backBtn.onclick = showTrail;
+
 saveMissionBtn.onclick = ()=>{
   const name = missionName.value.trim();
   const xp = parseInt(missionXP.value);
@@ -146,16 +151,37 @@ saveMissionBtn.onclick = ()=>{
   userData.tasks[key] = {name:name,xp:xp,time:time,done:false,history:[]};
   db.ref("users/"+userId).set(userData).then(()=>{
     missionName.value=""; missionXP.value=""; missionTime.value="";
-    showTrail();
+    renderMissionSheet();
   });
 };
+
+// ================= PLANILHA =================
+function renderMissionSheet(){
+  // limpa todas as linhas exceto cabeçalho
+  missionsTable.innerHTML = `<tr>
+    <th>Nome da Missão</th><th>XP</th><th>Horário</th><th>Ação</th>
+  </tr>`;
+  Object.entries(userData.tasks || {}).sort((a,b)=>a[1].time.localeCompare(b[1].time)).forEach(([key,t])=>{
+    const row = missionsTable.insertRow();
+    row.insertCell(0).innerText=t.name;
+    row.insertCell(1).innerText=t.xp;
+    row.insertCell(2).innerText=t.time;
+    const actionCell = row.insertCell(3);
+    const delBtn = document.createElement("button");
+    delBtn.innerText="❌";
+    delBtn.onclick = ()=>{
+      delete userData.tasks[key];
+      db.ref("users/"+userId).set(userData).then(renderMissionSheet);
+    };
+    actionCell.appendChild(delBtn);
+  });
+}
 
 // ================= TRAIL =================
 function renderTrail(){
   trailContainer.querySelectorAll(".trophy-node").forEach(n=>n.remove());
   if(!userData.tasks) return;
-  const tasksArr = Object.entries(userData.tasks)
-    .filter(([k,t])=>!t.done) // only pending
+  const tasksArr = Object.entries(userData.tasks).filter(([k,t])=>!t.done)
     .sort((a,b)=>a[1].time.localeCompare(b[1].time));
   const width = window.innerWidth-100;
   const height = window.innerHeight-100;
@@ -180,7 +206,7 @@ completeBtn.onclick = ()=>{
   if(!selectedTaskKey) return;
   const task = userData.tasks[selectedTaskKey];
   const now = Date.now();
-  task.done = true; // disappear from trail
+  task.done = true;
   if(!task.history) task.history=[];
   task.history.push(now);
   userData.xp = (userData.xp||0)+task.xp;
@@ -189,14 +215,14 @@ completeBtn.onclick = ()=>{
     completeBtn.style.display="none";
     renderTrail();
     renderCompleted();
+    renderMissionSheet();
   });
 };
 
 // ================= COMPLETED MISSIONS =================
 function renderCompleted(){
   completedList.innerHTML="";
-  if(!userData.tasks) return;
-  Object.entries(userData.tasks).forEach(([key,t])=>{
+  Object.entries(userData.tasks || {}).forEach(([key,t])=>{
     if(t.history && t.history.length>0){
       const div = document.createElement("div");
       div.className="missionItem";
@@ -215,7 +241,6 @@ function dailyReset(){
   const lastReset = userData.lastReset || 0;
   const today = new Date().setHours(0,0,0,0);
   if(lastReset < today){
-    // reset all tasks to done=false
     Object.values(userData.tasks).forEach(t=>t.done=false);
     userData.lastReset = Date.now();
     db.ref("users/"+userId).set(userData);
@@ -229,6 +254,7 @@ setInterval(()=>{
     dailyReset();
     renderTrail();
     renderCompleted();
+    renderMissionSheet();
   }
 },60000);
 
