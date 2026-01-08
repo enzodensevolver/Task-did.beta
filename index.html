@@ -10,124 +10,71 @@
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
-  authDomain: "sua-rotina-em-um-site.firebaseapp.com",
-  projectId: "sua-rotina-em-um-site"
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_DOMINIO.firebaseapp.com",
+  projectId: "SEU_PROJECT_ID"
 };
-
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 </script>
 </head>
 
-<body style="
-margin:0;
-font-family:Arial;
+<body style="margin:0;font-family:Arial;
 background:linear-gradient(135deg,#38bdf8,#22c55e);
-min-height:100vh;
-display:flex;
-align-items:center;
-justify-content:center;
-">
+min-height:100vh;display:flex;align-items:center;justify-content:center;">
 
-<div id="app" style="
-background:white;
-padding:25px;
-border-radius:15px;
-width:100%;
-max-width:360px;
-box-shadow:0 10px 30px rgba(0,0,0,.2);
-text-align:center;
-">
+<div id="app" style="background:#fff;padding:25px;border-radius:15px;
+width:100%;max-width:360px;text-align:center">
 
-<h2>🌟 Bem-vindo</h2>
+<h2 id="title">🌟 Bem-vindo</h2>
 
-<input id="name" placeholder="Nome" style="width:100%;padding:10px;margin:8px 0">
-<input id="email" placeholder="Email" style="width:100%;padding:10px;margin:8px 0">
-<input id="password" type="password" placeholder="Senha" style="width:100%;padding:10px;margin:8px 0">
+<div>
+<button onclick="setLang('pt')">🇧🇷</button>
+<button onclick="setLang('en')">🇺🇸</button>
+<button onclick="setLang('es')">🇪🇸</button>
+</div>
 
-<button onclick="register()" style="
-width:100%;
-padding:10px;
-background:#22c55e;
-color:white;
-border:none;
-border-radius:8px;
-margin-top:8px;
-">
-Criar conta
-</button>
+<input id="name" placeholder="Nome" style="width:100%;margin:8px 0">
+<input id="email" placeholder="Email" style="width:100%;margin:8px 0">
+<input id="password" type="password" placeholder="Senha" style="width:100%;margin:8px 0">
 
-<button onclick="login()" style="
-width:100%;
-padding:10px;
-background:#38bdf8;
-color:white;
-border:none;
-border-radius:8px;
-margin-top:8px;
-">
-Entrar
-</button>
+<button onclick="register()" id="btnRegister">Criar conta</button>
+<button onclick="login()" id="btnLogin">Entrar</button>
 
 <p id="msg" style="color:red"></p>
-
 </div>
 
 <script>
-const appDiv = document.getElementById("app");
-const msg = document.getElementById("msg");
+const t={
+pt:{title:"🌟 Bem-vindo",name:"Nome",password:"Senha",register:"Criar conta",login:"Entrar"},
+en:{title:"🌟 Welcome",name:"Name",password:"Password",register:"Create account",login:"Login"},
+es:{title:"🌟 Bienvenido",name:"Nombre",password:"Contraseña",register:"Crear cuenta",login:"Entrar"}
+};
 
-const nameInput = document.getElementById("name");
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
+function setLang(l){
+title.innerText=t[l].title;
+name.placeholder=t[l].name;
+password.placeholder=t[l].password;
+btnRegister.innerText=t[l].register;
+btnLogin.innerText=t[l].login;
+}
 
 function register(){
-  msg.innerText = "";
-
-  if(!nameInput.value || !emailInput.value || !passwordInput.value){
-    msg.innerText = "Preencha todos os campos";
-    return;
-  }
-
-  auth.createUserWithEmailAndPassword(
-    emailInput.value,
-    passwordInput.value
-  )
-  .then(cred=>{
-    return db.collection("users").doc(cred.user.uid).set({
-      name: nameInput.value,
-      email: emailInput.value,
-      xp: 0,
-      level: 1,
-      createdAt: new Date()
-    });
-  })
-  .then(()=>{
-    appDiv.innerHTML = "<h2>🎉 Conta criada com sucesso!</h2>";
-  })
-  .catch(e=>msg.innerText = e.message);
+auth.createUserWithEmailAndPassword(email.value,password.value)
+.then(c=>{
+db.collection("users").doc(c.user.uid).set({
+name:name.value,xp:0,level:1
+});
+location.href="dashboard.html";
+}).catch(e=>msg.innerText=e.message);
 }
 
 function login(){
-  msg.innerText = "";
-
-  if(!emailInput.value || !passwordInput.value){
-    msg.innerText = "Informe email e senha";
-    return;
-  }
-
-  auth.signInWithEmailAndPassword(
-    emailInput.value,
-    passwordInput.value
-  )
-  .then(()=>{
-    appDiv.innerHTML = "<h2>✅ Login realizado!</h2>";
-  })
-  .catch(e=>msg.innerText = e.message);
+auth.signInWithEmailAndPassword(email.value,password.value)
+.then(()=>location.href="dashboard.html")
+.catch(e=>msg.innerText=e.message);
 }
 </script>
-
 </body>
 </html>
