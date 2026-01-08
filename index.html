@@ -1,69 +1,176 @@
 <script>
-}
+// ================= FIREBASE CONFIG =================
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_AUTH_DOMAIN",
+  databaseURL: "SUA_DATABASE_URL",
+  projectId: "SEU_PROJECT_ID",
+  storageBucket: "SEU_BUCKET",
+  messagingSenderId: "SEU_SENDER_ID",
+  appId: "SEU_APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+
+// ================= ELEMENTOS =================
+const loginCard = document.getElementById("loginCard");
+const dashboardCard = document.getElementById("dashboardCard");
+const parentCard = document.getElementById("parentCard");
+const msg = document.getElementById("msg");
+const nameInput = document.getElementById("name");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const roleSelect = document.getElementById("roleSelect");
+const tasksDiv = document.getElementById("tasks");
+const xpBar = document.getElementById("xpBar");
+const trophyPath = document.getElementById("trophyPath");
+const completedTasksDiv = document.getElementById("completedTasks");
+const childList = document.getElementById("childList");
+
+let userId, userData;
+
+// ================= AUTH =================
+auth.onAuthStateChanged(user => {
+  if(!user){ showLogin(); return; }
+  userId = user.uid;
+  db.ref("users/"+userId).once("value").then(snap => {
+    userData = snap.val();
+    if(!userData){
+      const role = roleSelect.value;
+      userData = {name:nameInput.value,email:emailInput.value,role:role,xp:0,level:1,tasks:{},badges:[]};
+      db.ref("users/"+userId).set(userData);
+    }
+    if(userData.role==='child'){ showDashboard(); loadChildDashboard(); }
+    else { showParent(); loadParentPanel(); }
+  }).catch(e => msg.innerText = e.message);
+});
+
+// ================= SHOW =================
+function showLogin(){ loginCard.style.display='block'; dashboardCard.style.display='none'; parentCard.style.display='none'; }
+function showDashboard(){ loginCard.style.display='none'; dashboardCard.style.display='block'; parentCard.style.display='none'; }
+function showParent(){ loginCard.style.display='none'; dashboardCard.style.display='none'; parentCard.style.display='block'; }
+
+// ================= REGISTER/LOGIN =================
+function register(){
+  const name = nameInput.value.trim();
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+  const role = roleSelect.value;
+  if(!name||!email||!password){ msg.innerText="Preencha todos os campos!"; return; }
+  auth.createUserWithEmailAndPassword(email,password)
+    .then(cred => {
+      userId = cred.user.uid;
+      userData = {name,email,role,xp:0,level:1,tasks:{},badges:[]};
+      db.ref("users/"+userId).set(userData);
+      if(role==='child'){ showDashboard(); loadChildDashboard(); } else { showParent(); loadParentPanel(); }
+    }).catch(e=>msg.innerText=e.message);
 }
 
+function login(){
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+  if(!email||!password){ msg.innerText="Preencha todos os campos!"; return; }
+  auth.signInWithEmailAndPassword(email,password)
+    .then(cred => {
+      userId = cred.user.uid;
+      db.ref("users/"+userId).once("value").then(snap => {
+        userData = snap.val();
+        if(userData.role==='child'){ showDashboard(); loadChildDashboard(); }
+        else { showParent(); loadParentPanel(); }
+      });
+    }).catch(e=>msg.innerText=e.message);
+}
+
+// ================= DASHBOARD CRIANÇA =================
+function loadChildDashboard(){
+  updateXP();
+  renderTasks();
+  renderTrophyPath();
+}
+
+function updateXP(){
+  xpBar.style.width = (userData.xp % 100)+'%';
+  xpBar.innerText = userData.xp+' XP';
+}
+
+function renderTasks(){
+  tasksDiv.innerHTML='';
+  completedTasksDiv.innerHTML='';
+  for(let key in userData.tasks){
+    const t = userData.tasks[key];
+    const div = document.createElement('div');
+    div.className='task';
+    div.innerHTML = `<span>${t.name} (XP:${t.xp})</span>`;
+    if(!t.done){
+      const btn = document.createElement('button');
+      btn.innerText='✅';
+      btn.onclick = ()=>completeTask(key);
+      div.appendChild(btn);
+      tasksDiv.appendChild(div);
+    } else {
+      completedTasksDiv.innerHTML += `<div>${t.name} ✅</div>`;
+    }
+  }
+}
 
 function completeTask(key){
-userData.tasks[key].done=true;
-userData.xp += userData.tasks[key].xp;
-if(userData.xp >=100){ userData.xp-=100; userData.level++; userData.badges.push('🏆 Novo nível!'); }
-db.ref('users/'+userId).set(userData);
-loadChildDashboard();
-// animação divertida
-const node = document.createElement('div');
-node.className='badge';
-node.innerText='🏆';
-document.body.appendChild(node);
-setTimeout(()=>node.remove(),1000);
+  userData.tasks[key].done=true;
+  userData.xp += userData.tasks[key].xp;
+  if(userData.xp >=100){ userData.xp-=100; userData.level++; userData.badges.push('🏆 Novo nível!'); }
+  db.ref('users/'+userId).set(userData);
+  loadChildDashboard();
+  // animação divertida de medalha
+  const node = document.createElement('div');
+  node.className='badge';
+  node.innerText='🏆';
+  document.body.appendChild(node);
+  setTimeout(()=>node.remove(),1000);
 }
-
 
 function renderTrophyPath(){
-trophyPath.innerHTML='';
-for(let key in userData.tasks){
-const t=userData.tasks[key];
-const node=document.createElement('div');
-node.className='trophy-node';
-if(t.done) node.classList.add('completed');
-node.innerText='🏆';
-trophyPath.appendChild(node);
-}
+  trophyPath.innerHTML='';
+  for(let key in userData.tasks){
+    const t=userData.tasks[key];
+    const node=document.createElement('div');
+    node.className='trophy-node';
+    if(t.done) node.classList.add('completed');
+    node.innerText='🏆';
+    trophyPath.appendChild(node);
+  }
 }
 
-
-// ----------------- PAINEL PAIS -----------------
+// ================= PAINEL PAIS =================
 function loadParentPanel(){
-childList.innerHTML='';
-db.ref('users').once('value').then(snap=>{
-snap.forEach(child=>{
-const u=child.val();
-if(u.role==='child'){
-const li=document.createElement('li');
-li.innerText=u.name+' - XP:'+u.xp;
-childList.appendChild(li);
+  childList.innerHTML='';
+  db.ref('users').once('value').then(snap=>{
+    snap.forEach(child=>{
+      const u=child.val();
+      if(u.role==='child'){
+        const li=document.createElement('li');
+        li.innerText=u.name+' - XP:'+u.xp;
+        childList.appendChild(li);
+      }
+    });
+  });
 }
-});
-});
-}
-
 
 function createTaskForChild(){
-const email=document.getElementById('childEmail').value.trim();
-const name=document.getElementById('taskName').value.trim();
-const xp=parseInt(document.getElementById('taskXP').value);
-if(!email||!name||isNaN(xp)){ alert('Preencha todos os campos'); return; }
-db.ref('users').orderByChild('email').equalTo(email).once('value').then(snap=>{
-snap.forEach(child=>{
-const u=child.val();
-const key='task_'+Date.now();
-u.tasks[key]={name:name,xp:xp,done:false};
-db.ref('users/'+child.key).set(u);
-alert('Tarefa criada!');
-});
-});
+  const email=document.getElementById('childEmail').value.trim();
+  const name=document.getElementById('taskName').value.trim();
+  const xp=parseInt(document.getElementById('taskXP').value);
+  if(!email||!name||isNaN(xp)){ alert('Preencha todos os campos'); return; }
+  db.ref('users').orderByChild('email').equalTo(email).once('value').then(snap=>{
+    snap.forEach(child=>{
+      const u=child.val();
+      const key='task_'+Date.now();
+      u.tasks[key]={name:name,xp:xp,done:false};
+      db.ref('users/'+child.key).set(u);
+      alert('Tarefa criada!');
+    });
+  });
 }
 
-
-// ----------------- LOGOUT -----------------
+// ================= LOGOUT =================
 function logout(){ auth.signOut().then(showLogin); }
 </script>
