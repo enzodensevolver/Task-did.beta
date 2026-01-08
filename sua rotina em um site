@@ -1,0 +1,53 @@
+index.html
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Registro</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
+
+</head>
+<body>
+
+<h2>Criar conta</h2>
+
+<input id="email" placeholder="Email"><br><br>
+<input id="password" type="password" placeholder="Senha"><br><br>
+<input id="name" placeholder="Nome"><br><br>
+
+<button onclick="register()">Registrar</button>
+
+<script>
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_DOMINIO.firebaseapp.com",
+  projectId: "SEU_PROJECT_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+function register() {
+  const email = document.getElementById("email").value;
+  const pass = document.getElementById("password").value;
+  const name = document.getElementById("name").value;
+
+  auth.createUserWithEmailAndPassword(email, pass)
+  .then(user => {
+    db.collection("users").doc(user.user.uid).set({
+      name: name,
+      email: email
+    });
+    alert("Conta criada com sucesso");
+  })
+  .catch(err => alert(err.message));
+}
+</script>
+
+</body>
+</html>
