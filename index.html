@@ -96,6 +96,8 @@ const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
 const langSelect = document.getElementById("langSelect");
 
+const ADMIN_EMAIL = "enzo.n.sabino@gmail.com"; // email do admin
+
 function register(){
   const name = nameInput.value.trim();
   const email = emailInput.value.trim();
@@ -107,6 +109,8 @@ function register(){
     return;
   }
 
+  const role = email === ADMIN_EMAIL ? "admin" : "user";
+
   auth.createUserWithEmailAndPassword(email,password)
   .then(cred=>{
     db.collection("users").doc(cred.user.uid).set({
@@ -115,10 +119,10 @@ function register(){
       xp:0,
       level:1,
       lang,
-      role:"user",
+      role,
       tasks:[]
     });
-    window.location="dashboard.html";
+    window.location = role === "admin" ? "admin.html" : "dashboard.html";
   })
   .catch(e=>msg.innerText=e.message);
 }
@@ -132,10 +136,9 @@ function login(){
   }
   auth.signInWithEmailAndPassword(email,password)
   .then(cred=>{
-    // Carrega idioma do usuário no login e atualiza localStorage para dashboard
     db.collection("users").doc(cred.user.uid).get().then(doc=>{
-      langSelect.value = doc.data().lang || "pt";
-      window.location="dashboard.html";
+      const role = doc.data().role || "user";
+      window.location = role === "admin" ? "admin.html" : "dashboard.html";
     });
   })
   .catch(e=>msg.innerText=e.message);
