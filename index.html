@@ -2,19 +2,21 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Trilha de Troféus Diária</title>
+<title>Trilha de Troféus Divertida</title>
 <style>
 body{margin:0;font-family:Arial;background:#ccefc4;overflow:hidden;}
 #trailContainer{position:relative;width:100vw;height:100vh;background:url('https://images.unsplash.com/photo-1506765515384-028b60a970df?auto=format&fit=crop&w=1600&q=80') no-repeat center center/cover;}
-.trophy-node{position:absolute;width:60px;height:60px;border-radius:50%;display:flex;justify-content:center;align-items:center;font-size:24px;color:white;cursor:pointer;transition:0.3s;box-shadow:0 3px 6px rgba(0,0,0,0.3);}
-.trophy-node.pending{background:#6366f1;}
-.trophy-node.done{background:#f59e0b;}
+.trophy-node{position:absolute;width:80px;height:80px;border-radius:50%;display:flex;flex-direction:column;justify-content:center;align-items:center;font-size:18px;color:white;cursor:pointer;transition:0.3s;box-shadow:0 3px 6px rgba(0,0,0,0.3);background-size:cover;background-position:center;text-align:center;padding:4px;}
+.trophy-node .node-name{font-size:12px;margin-top:4px;text-shadow:1px 1px 2px black;}
+.trophy-node.pending{border:3px solid #6366f1;}
+.trophy-node.done{border:3px solid #f59e0b;filter:brightness(1.2);}
 #completeBtn{position:absolute;display:none;background:#22c55e;color:white;padding:8px 12px;border:none;border-radius:8px;cursor:pointer;}
 #completedContainer{position:absolute;top:20px;left:20px;background:white;padding:10px;border-radius:10px;max-height:50vh;overflow-y:auto;opacity:0.9;}
 .missionItem{margin-bottom:5px;cursor:pointer;}
 .counter{background:#6366f1;color:white;padding:2px 6px;border-radius:8px;margin-left:5px;font-size:12px;}
 #addMissionBtn{position:absolute;top:20px;right:20px;font-size:28px;cursor:pointer;}
-#backBtn{position:absolute;top:20px;left:20px;font-size:24px;cursor:pointer;cursor:pointer;}
+#levelDisplay{position:absolute;bottom:20px;right:20px;background:#6366f1;color:white;padding:10px 15px;border-radius:50%;font-weight:bold;font-size:16px;box-shadow:0 3px 6px rgba(0,0,0,0.3);}
+#backBtn{position:absolute;top:20px;left:20px;font-size:24px;cursor:pointer;}
 .card{position:absolute;width:95%;max-width:800px;background:white;border-radius:20px;padding:20px;box-shadow:0 15px 35px rgba(0,0,0,0.3);top:50%;left:50%;transform:translate(-50%,-50%);}
 table{width:100%;border-collapse:collapse;margin-top:10px;}
 th,td{border:1px solid #ccc;padding:8px;text-align:left;}
@@ -40,6 +42,7 @@ button{cursor:pointer;}
 <div id="addMissionBtn">➕</div>
 <div id="completedContainer"><h3>Missões Concluídas</h3><div id="completedList"></div></div>
 <button id="completeBtn">Concluir</button>
+<div id="levelDisplay">Lv 1</div>
 </div>
 
 <!-- PLANILHA DE MISSÕES -->
@@ -67,7 +70,7 @@ button{cursor:pointer;}
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
-// FIREBASE CONFIG
+// CONFIG FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
   authDomain: "sua-rotina-em-um-site.firebaseapp.com",
@@ -100,13 +103,22 @@ const missionTime = document.getElementById("missionTime");
 const completeBtn = document.getElementById("completeBtn");
 const completedList = document.getElementById("completedList");
 const missionsTable = document.getElementById("missionsTable");
+const levelDisplay = document.getElementById("levelDisplay");
 
 let userId, userData;
 let selectedTaskKey = null;
 
+// ================= IMAGENS DA TRILHA =================
+const trailImages = [
+  'https://cdn-icons-png.flaticon.com/512/616/616408.png',
+  'https://cdn-icons-png.flaticon.com/512/616/616472.png',
+  'https://cdn-icons-png.flaticon.com/512/616/616466.png',
+  'https://cdn-icons-png.flaticon.com/512/616/616490.png',
+];
+
 // ================= SHOW FUNCTIONS =================
 function showLogin(){ loginCard.style.display="block"; trailContainer.style.display="none"; addMissionCard.style.display="none";}
-function showTrail(){ loginCard.style.display="none"; trailContainer.style.display="block"; addMissionCard.style.display="none"; renderTrail(); renderCompleted();}
+function showTrail(){ loginCard.style.display="none"; trailContainer.style.display="block"; addMissionCard.style.display="none"; renderTrail(); renderCompleted(); updateLevelDisplay();}
 function showAddMission(){ loginCard.style.display="none"; trailContainer.style.display="none"; addMissionCard.style.display="block"; renderMissionSheet();}
 
 // ================= AUTH =================
@@ -157,7 +169,6 @@ saveMissionBtn.onclick = ()=>{
 
 // ================= PLANILHA =================
 function renderMissionSheet(){
-  // limpa todas as linhas exceto cabeçalho
   missionsTable.innerHTML = `<tr>
     <th>Nome da Missão</th><th>XP</th><th>Horário</th><th>Ação</th>
   </tr>`;
@@ -183,18 +194,19 @@ function renderTrail(){
   if(!userData.tasks) return;
   const tasksArr = Object.entries(userData.tasks).filter(([k,t])=>!t.done)
     .sort((a,b)=>a[1].time.localeCompare(b[1].time));
-  const width = window.innerWidth-100;
-  const height = window.innerHeight-100;
+  const width = window.innerWidth-150;
+  const height = window.innerHeight-150;
   tasksArr.forEach(([key,t],i)=>{
     const node = document.createElement("div");
     node.className="trophy-node pending";
-    node.innerText="🎯";
+    node.style.backgroundImage = `url(${trailImages[i % trailImages.length]})`;
     node.style.left = (50 + width*(i/tasksArr.length))+"px";
     node.style.top = (50 + (height/2)*(i%2===0?0.3:0.7))+"px";
+    node.innerHTML = `<div class="node-name">${t.name}</div>`;
     node.onclick = ()=>{
       selectedTaskKey = key;
       completeBtn.style.display="block";
-      completeBtn.style.left = (parseInt(node.style.left)+70)+"px";
+      completeBtn.style.left = (parseInt(node.style.left)+90)+"px";
       completeBtn.style.top = node.style.top;
     };
     trailContainer.appendChild(node);
@@ -207,7 +219,6 @@ completeBtn.onclick = ()=>{
   const task = userData.tasks[selectedTaskKey];
   const now = Date.now();
   task.done = true;
-  if(!task.history) task.history=[];
   task.history.push(now);
   userData.xp = (userData.xp||0)+task.xp;
   db.ref("users/"+userId).set(userData).then(()=>{
@@ -216,6 +227,7 @@ completeBtn.onclick = ()=>{
     renderTrail();
     renderCompleted();
     renderMissionSheet();
+    updateLevelDisplay();
   });
 };
 
@@ -224,15 +236,22 @@ function renderCompleted(){
   completedList.innerHTML="";
   Object.entries(userData.tasks || {}).forEach(([key,t])=>{
     if(t.history && t.history.length>0){
+      const totalXP = t.history.length * t.xp;
       const div = document.createElement("div");
       div.className="missionItem";
-      div.innerHTML = `${t.name} <span class="counter">x${t.history.length}</span>`;
+      div.innerHTML = `${t.name} <span class="counter">x${t.history.length}</span> - ${totalXP} XP`;
       div.onclick = ()=>{
         alert(`Missão: ${t.name}\nConcluída ${t.history.length} vezes:\n${t.history.map(ts=>new Date(ts).toLocaleString()).join("\n")}`);
       };
       completedList.appendChild(div);
     }
   });
+}
+
+// ================= LEVEL DISPLAY =================
+function updateLevelDisplay(){
+  const level = Math.floor((userData.xp||0)/1000)+1;
+  levelDisplay.innerText = `Lv ${level}`;
 }
 
 // ================= DAILY RESET =================
@@ -247,7 +266,7 @@ function dailyReset(){
   }
 }
 
-// ================= AUTO RESET AT MIDNIGHT =================
+// AUTO RESET AT MIDNIGHT
 setInterval(()=>{
   const now = new Date();
   if(now.getHours()===0 && now.getMinutes()===0){
@@ -255,9 +274,9 @@ setInterval(()=>{
     renderTrail();
     renderCompleted();
     renderMissionSheet();
+    updateLevelDisplay();
   }
 },60000);
-
 </script>
 </body>
 </html>
