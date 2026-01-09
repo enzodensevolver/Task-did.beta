@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Minha Rotina Gameificada</title>
-<!-- Firebase 8 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -11,11 +10,10 @@
 <style>
 /* RESET E GERAL */
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Arial',sans-serif;background:linear-gradient(135deg,#f97316,#f43f5e);display:flex;justify-content:center;align-items:center;min-height:100vh;overflow-x:hidden;}
+body{font-family:'Arial',sans-serif;background:#3b82f6;display:flex;justify-content:center;align-items:center;min-height:100vh;overflow-x:hidden;}
 button{cursor:pointer;border:none;font-weight:bold;border-radius:10px;padding:10px;transition:0.2s;}
 button:hover{opacity:0.8;}
 .card{background:white;border-radius:20px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.2);width:95%;max-width:900px;margin:10px;}
-input, select{padding:10px;margin:8px 0;border-radius:10px;border:1px solid #ccc;width:100%;}
 
 /* LOGIN */
 #loginCard{text-align:center;}
@@ -23,7 +21,7 @@ input, select{padding:10px;margin:8px 0;border-radius:10px;border:1px solid #ccc
 #loginCard button{width:48%;margin:5px;}
 
 /* DASHBOARD TRILHA */
-#dashboardCard{display:none;position:relative;min-height:90vh;overflow-y:auto;background:url('https://i.ibb.co/7Q3YbM0/floresta-fundo.png') no-repeat center/cover;padding:20px;}
+#dashboardCard{display:none;position:relative;min-height:90vh;overflow-y:auto;padding:20px;}
 .trilha{display:flex;flex-wrap:wrap;width:100%;justify-content:flex-start;position:relative;}
 .missao{position:relative;background:#22c55e;color:white;padding:10px 15px;margin:10px;border-radius:15px;cursor:pointer;display:flex;flex-direction:column;align-items:center;transition:0.3s;}
 .missao:hover{transform:scale(1.1);}
@@ -35,10 +33,16 @@ input, select{padding:10px;margin:8px 0;border-radius:10px;border:1px solid #ccc
 #createCard table{width:100%;border-collapse:collapse;}
 #createCard th, #createCard td{border:1px solid #ccc;padding:10px;text-align:center;}
 #createCard th{background:#22c55e;color:white;}
+#createCard input{width:80%;padding:5px;}
 
 /* PAGINA COMPLETAS */
 #completedCard{display:none;}
 .completedMissao{background:#6366f1;color:white;padding:10px;margin:5px;border-radius:15px;display:flex;justify-content:space-between;}
+
+/* RECOMPENSAS */
+#rewardCard{display:none;}
+.recompensa{background:#f59e0b;color:white;padding:10px;margin:10px;border-radius:15px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+.recompensa:hover{transform:scale(1.05);}
 </style>
 </head>
 <body>
@@ -59,6 +63,7 @@ input, select{padding:10px;margin:8px 0;border-radius:10px;border:1px solid #ccc
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
 <button onclick="showCreate()">➕ Missão</button>
 <button onclick="showCompleted()">✅ Missões</button>
+<button onclick="showRewards()">🎁 Recompensas</button>
 <button onclick="logout()">🚪 Sair</button>
 </div>
 <div class="trilha" id="trilha"></div>
@@ -75,6 +80,11 @@ input, select{padding:10px;margin:8px 0;border-radius:10px;border:1px solid #ccc
 <tbody id="missaoTable"></tbody>
 </table>
 <br>
+<input id="newNome" placeholder="Nome da missão">
+<input id="newXP" type="number" placeholder="XP">
+<input id="newHora" type="time">
+<button onclick="adicionarMissao()">Adicionar</button>
+<br><br>
 <button onclick="voltarTrilha()">⬅ Voltar</button>
 </div>
 
@@ -83,6 +93,21 @@ input, select{padding:10px;margin:8px 0;border-radius:10px;border:1px solid #ccc
 <h2>🎖️ Missões Completas</h2>
 <div id="completasList"></div>
 <br>
+<button onclick="voltarTrilha()">⬅ Voltar</button>
+</div>
+
+<!-- PAGINA RECOMPENSAS -->
+<div class="card" id="rewardCard">
+<h2>🎁 Recompensas</h2>
+<table>
+<thead><tr><th>Recompensa</th><th>XP necessário</th><th>Ações</th></tr></thead>
+<tbody id="rewardTable"></tbody>
+</table>
+<br>
+<input id="rewardNome" placeholder="Nome da recompensa">
+<input id="rewardXP" type="number" placeholder="XP necessário">
+<button onclick="adicionarRecompensa()">Adicionar</button>
+<br><br>
 <button onclick="voltarTrilha()">⬅ Voltar</button>
 </div>
 
@@ -106,6 +131,7 @@ const loginCard = document.getElementById('loginCard');
 const dashboardCard = document.getElementById('dashboardCard');
 const createCard = document.getElementById('createCard');
 const completedCard = document.getElementById('completedCard');
+const rewardCard = document.getElementById('rewardCard');
 const msg = document.getElementById('msg');
 const nameInput = document.getElementById('name');
 const emailInput = document.getElementById('email');
@@ -114,6 +140,12 @@ const trilha = document.getElementById('trilha');
 const levelDisplay = document.getElementById('levelDisplay');
 const missaoTable = document.getElementById('missaoTable');
 const completasList = document.getElementById('completasList');
+const newNome = document.getElementById('newNome');
+const newXP = document.getElementById('newXP');
+const newHora = document.getElementById('newHora');
+const rewardTable = document.getElementById('rewardTable');
+const rewardNome = document.getElementById('rewardNome');
+const rewardXP = document.getElementById('rewardXP');
 
 let userId = null;
 let userData = null;
@@ -130,11 +162,13 @@ auth.onAuthStateChanged(user=>{
     }
     showDashboard();
     renderTrilha();
+    renderCreate();
+    renderRewards();
     updateLevel();
   });
 });
 
-// ================== FUNÇÕES LOGIN/REGISTER ==================
+// ================== LOGIN/REGISTER ==================
 function register(){
   const name = nameInput.value.trim();
   const email = emailInput.value.trim();
@@ -160,20 +194,21 @@ function login(){
       userData = snap.val();
       showDashboard();
       renderTrilha();
+      renderCreate();
+      renderRewards();
       updateLevel();
     });
   }).catch(e=>msg.innerText=e.message);
 }
 
-function logout(){
-  auth.signOut().then(()=>{showLogin();});
-}
+function logout(){ auth.signOut().then(()=>{showLogin();}); }
 
 // ================== VIEWS ==================
-function showLogin(){ loginCard.style.display='block'; dashboardCard.style.display='none'; createCard.style.display='none'; completedCard.style.display='none'; }
-function showDashboard(){ loginCard.style.display='none'; dashboardCard.style.display='block'; createCard.style.display='none'; completedCard.style.display='none'; }
-function showCreate(){ loginCard.style.display='none'; dashboardCard.style.display='none'; createCard.style.display='block'; completedCard.style.display='none'; renderCreate(); }
-function showCompleted(){ loginCard.style.display='none'; dashboardCard.style.display='none'; createCard.style.display='none'; completedCard.style.display='block'; renderCompleted(); }
+function showLogin(){ loginCard.style.display='block'; dashboardCard.style.display='none'; createCard.style.display='none'; completedCard.style.display='none'; rewardCard.style.display='none'; }
+function showDashboard(){ loginCard.style.display='none'; dashboardCard.style.display='block'; createCard.style.display='none'; completedCard.style.display='none'; rewardCard.style.display='none'; }
+function showCreate(){ loginCard.style.display='none'; dashboardCard.style.display='none'; createCard.style.display='block'; completedCard.style.display='none'; rewardCard.style.display='none'; renderCreate(); }
+function showCompleted(){ loginCard.style.display='none'; dashboardCard.style.display='none'; createCard.style.display='none'; completedCard.style.display='block'; rewardCard.style.display='none'; renderCompleted(); }
+function showRewards(){ loginCard.style.display='none'; dashboardCard.style.display='none'; createCard.style.display='none'; completedCard.style.display='none'; rewardCard.style.display='block'; renderRewards(); }
 function voltarTrilha(){ showDashboard(); renderTrilha(); }
 
 // ================== TRILHA ==================
@@ -189,9 +224,7 @@ function renderTrilha(){
         const btn = document.createElement('button');
         btn.innerText='Concluir';
         btn.style.background='green';
-        btn.onclick = ()=>{
-          concluirMissao(key);
-        };
+        btn.onclick = ()=>{concluirMissao(key);};
         div.appendChild(btn);
       };
     } else div.style.opacity='0.5';
@@ -203,7 +236,6 @@ function concluirMissao(key){
   const missao = userData.missoes[key];
   const hoje = new Date().toLocaleDateString();
   if(!userData.completed[key]) userData.completed[key]=[];
-  // só adiciona se não tiver concluído hoje
   if(!userData.completed[key].includes(hoje)){
     userData.completed[key].push(hoje);
     userData.xp += missao.xp;
@@ -214,8 +246,6 @@ function concluirMissao(key){
     updateLevel();
   }
 }
-
-function updateLevel(){ levelDisplay.innerText='Level: '+userData.level; }
 
 // ================== CRIAR MISSÕES ==================
 function renderCreate(){
@@ -228,19 +258,24 @@ function renderCreate(){
   });
 }
 
-function criarMissao(nome,xp,hora){
-  const key='m_'+Date.now();
-  userData.missoes[key]={nome,nome, xp:Number(xp), hora:hora, done:false};
+function adicionarMissao(){
+  const nome = newNome.value.trim();
+  const xp = Number(newXP.value);
+  const hora = newHora.value;
+  if(!nome||!xp||!hora){ alert('Preencha todos os campos'); return; }
+  const key = 'm_'+Date.now();
+  userData.missoes[key]={nome:nome,xp:xp,hora:hora,done:false};
   db.ref('users/'+userId).set(userData);
-  renderCreate();
   renderTrilha();
+  renderCreate();
+  newNome.value=''; newXP.value=''; newHora.value='';
 }
 
 function removerMissao(key){
   delete userData.missoes[key];
   db.ref('users/'+userId).set(userData);
-  renderCreate();
   renderTrilha();
+  renderCreate();
 }
 
 // ================== COMPLETAS ==================
@@ -256,15 +291,52 @@ function renderCompleted(){
   });
 }
 
+// ================== RECOMPENSAS ==================
+function renderRewards(){
+  rewardTable.innerHTML='';
+  Object.entries(userData.rewards).forEach(([key,rec])=>{
+    const tr=document.createElement('tr');
+    const podeColetar = userData.xp >= rec.xp && !rec.done;
+    tr.innerHTML=`<td>${rec.nome}</td><td>${rec.xp}</td>
+    <td>${podeColetar?`<button style="background:green;color:white;" onclick="coletarReward('${key}')">Coletar</button>`:'Bloqueado'}</td>`;
+    rewardTable.appendChild(tr);
+  });
+}
+
+function adicionarRecompensa(){
+  const nome = rewardNome.value.trim();
+  const xp = Number(rewardXP.value);
+  if(!nome||!xp){ alert('Preencha todos os campos'); return; }
+  const key = 'r_'+Date.now();
+  userData.rewards[key]={nome:nome,xp:xp,done:false};
+  db.ref('users/'+userId).set(userData);
+  rewardNome.value=''; rewardXP.value='';
+  renderRewards();
+}
+
+function coletarReward(key){
+  const rec = userData.rewards[key];
+  if(userData.xp>=rec.xp && !rec.done){
+    rec.done=true;
+    db.ref('users/'+userId).set(userData);
+    alert(`Você coletou a recompensa: ${rec.nome}!`);
+    renderRewards();
+  }
+}
+
 // ================== REINÍCIO DIÁRIO ==================
 setInterval(()=>{
-  const now=new Date();
+  const now = new Date();
   if(now.getHours()===0 && now.getMinutes()===0){
     Object.values(userData.missoes).forEach(m=>m.done=false);
+    Object.values(userData.rewards).forEach(r=>r.done=false);
     db.ref('users/'+userId).set(userData);
     renderTrilha();
+    renderRewards();
   }
-},60000); // verifica a cada minuto
+},60000);
+
+function updateLevel(){ levelDisplay.innerText='Level: '+userData.level; }
 </script>
 
 </body>
