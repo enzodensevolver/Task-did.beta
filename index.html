@@ -176,14 +176,19 @@ function loadTrail(){
   });
 }
 
-// Completar tarefa
+// ================= COMPLETE TASK =================
 function completeTask(key){
   if(!userData.completed[key]) userData.completed[key]={count:0,dates:[]};
   userData.completed[key].count++;
   userData.completed[key].dates.push(new Date().toLocaleString());
   userData.tasks[key].done=true;
   userData.xp = (userData.xp||0)+userData.tasks[key].xp;
-  db.ref("users/"+userId).set(userData);
+  // Atualizando apenas as partes necessárias
+  db.ref('users/'+userId).update({
+    tasks: userData.tasks,
+    completed: userData.completed,
+    xp: userData.xp
+  });
   loadTrail();
   showConfetti();
 }
@@ -212,7 +217,7 @@ document.getElementById("saveTaskBtn").onclick = ()=>{
   if(!name||isNaN(xp)||!hour){ alert('Preencha todos os campos'); return; }
   const key = 'task_'+Date.now();
   userData.tasks[key]={name, xp, hour, done:false};
-  db.ref("users/"+userId).set(userData).then(()=>renderTaskTable());
+  db.ref("users/"+userId+"/tasks/"+key).set(userData.tasks[key]).then(()=>renderTaskTable());
 };
 
 function renderTaskTable(){
@@ -226,8 +231,7 @@ function renderTaskTable(){
 }
 
 function deleteTask(key){
-  delete userData.tasks[key];
-  db.ref("users/"+userId).set(userData).then(()=>renderTaskTable());
+  db.ref("users/"+userId+"/tasks/"+key).remove().then(()=>{ delete userData.tasks[key]; renderTaskTable(); });
 }
 
 // ================= COMPLETED =================
@@ -261,7 +265,7 @@ document.getElementById("saveRewardBtn").onclick = ()=>{
   if(!name||isNaN(xp)){ alert('Preencha todos os campos'); return; }
   const key='reward_'+Date.now();
   userData.rewards[key]={name,xp,claimed:false};
-  db.ref("users/"+userId).set(userData).then(()=>renderRewardsTable());
+  db.ref("users/"+userId+"/rewards/"+key).set(userData.rewards[key]).then(()=>renderRewardsTable());
 };
 
 function renderRewardsTable(){
@@ -278,7 +282,7 @@ function renderRewardsTable(){
 
 function claimReward(key){
   userData.rewards[key].claimed=true;
-  db.ref("users/"+userId).set(userData).then(()=>renderRewardsTable());
+  db.ref("users/"+userId+"/rewards/"+key).update({claimed:true}).then(()=>renderRewardsTable());
 }
 
 // ================= RESET DIÁRIO =================
@@ -286,7 +290,7 @@ setInterval(()=>{
   const now = new Date();
   if(now.getHours()===0 && now.getMinutes()===0){
     Object.keys(userData.tasks).forEach(key=>userData.tasks[key].done=false);
-    db.ref("users/"+userId).set(userData).then(()=>loadTrail());
+    db.ref("users/"+userId+"/tasks").update(userData.tasks).then(()=>loadTrail());
   }
 },60000);
 
