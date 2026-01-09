@@ -4,22 +4,23 @@
 <meta charset="UTF-8">
 <title>Minha Rotina Gameificada</title>
 <style>
-html, body {height:100%; margin:0; font-family: Arial; background: linear-gradient(135deg,#a3cef1,#22c55e);}
+html, body {height:100%; margin:0; font-family: Arial; background: #a3cef1;}
 body {display:flex; justify-content:center; align-items:center; overflow:hidden;}
-.fullscreen-card {position:absolute; top:0; left:0; width:100%; height:100%; background:white; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:20px; box-sizing:border-box;}
+
+.fullscreen-card {position:absolute; top:0; left:0; width:100%; height:100%; background:white; display:flex; flex-direction:column; align-items:center; padding:20px; box-sizing:border-box;}
 header {width:100%; display:flex; justify-content:space-between; align-items:center;}
-.trophy-path {position:relative; flex:1; width:95%; display:flex; flex-wrap:wrap; gap:20px; align-content:flex-start; padding:10px; overflow-y:auto;}
-.trophy-node {width:80px; height:80px; border-radius:50%; background:#ddd; display:flex; justify-content:center; align-items:center; font-size:18px; cursor:pointer; position:relative; transition: background .3s;}
-.trophy-node.completed{background:#f59e0b;color:white;}
-.trophy-node span {position:absolute; bottom:-18px; font-size:12px; text-align:center; width:100%;}
-.progress-bar {width:90%; height:20px; background:#ddd; border-radius:10px; margin:10px;}
-.progress-fill {height:100%; width:0%; background:#22c55e; text-align:right; padding-right:5px; color:white; font-weight:bold; border-radius:10px; transition: width .5s;}
-#levelDisplay {position:fixed; bottom:10px; right:10px; background:#6366f1; color:white; padding:8px 12px; border-radius:10px; font-weight:bold;}
 button {padding:10px; margin:5px; border-radius:8px; border:none; font-weight:bold; cursor:pointer;}
 .icon-btn {background:#22c55e; color:white;}
 .icon-btn:hover {background:#159e0e;}
+.progress-bar {width:90%; height:20px; background:#ddd; border-radius:10px; margin:10px;}
+.progress-fill {height:100%; width:0%; background:#22c55e; text-align:right; padding-right:5px; color:white; font-weight:bold; border-radius:10px; transition: width .5s;}
+.trophy-path {position:relative; flex:1; width:95%; display:flex; flex-wrap:wrap; gap:20px; align-content:flex-start; padding:10px; overflow-y:auto; background: url('https://i.imgur.com/w1oG5Xu.jpg') no-repeat center top; background-size: cover; border-radius:15px;}
+.trophy-node {width:80px; height:80px; border-radius:50%; background:#ddd; display:flex; justify-content:center; align-items:center; font-size:18px; cursor:pointer; position:relative; transition: background .3s;}
+.trophy-node.completed{background:#f59e0b;color:white;}
+.trophy-node span {position:absolute; bottom:-18px; font-size:12px; text-align:center; width:100%;}
 table {width:90%; border-collapse:collapse; margin-top:10px;}
 th, td {border:1px solid #ccc; padding:5px; text-align:center;}
+#levelDisplay {position:fixed; bottom:10px; right:10px; background:#6366f1; color:white; padding:8px 12px; border-radius:10px; font-weight:bold;}
 </style>
 </head>
 <body>
@@ -39,6 +40,7 @@ th, td {border:1px solid #ccc; padding:5px; text-align:center;}
 <header>
   <div class="icon-btn" onclick="showTaskSheet()">➕ Criar Missão</div>
   <div class="icon-btn" onclick="showCompleted()">✔️ Missões Concluídas</div>
+  <div class="icon-btn" onclick="logout()">🚪 Sair</div>
 </header>
 <div class="progress-bar"><div class="progress-fill" id="xpBar">0 XP</div></div>
 <div class="trophy-path" id="trophyPath"></div>
