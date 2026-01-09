@@ -3,83 +3,112 @@
 <head>
 <meta charset="UTF-8">
 <title>Minha Rotina Gameificada</title>
-<style>
-html, body {height:100%; margin:0; font-family: Arial; background: #a3cef1;}
-body {display:flex; justify-content:center; align-items:center; overflow:hidden;}
 
-.fullscreen-card {position:absolute; top:0; left:0; width:100%; height:100%; background:white; display:flex; flex-direction:column; align-items:center; padding:20px; box-sizing:border-box;}
-header {width:100%; display:flex; justify-content:space-between; align-items:center;}
-button {padding:10px; margin:5px; border-radius:8px; border:none; font-weight:bold; cursor:pointer;}
-.icon-btn {background:#22c55e; color:white;}
-.icon-btn:hover {background:#159e0e;}
-.progress-bar {width:90%; height:20px; background:#ddd; border-radius:10px; margin:10px;}
-.progress-fill {height:100%; width:0%; background:#22c55e; text-align:right; padding-right:5px; color:white; font-weight:bold; border-radius:10px; transition: width .5s;}
-.trophy-path {position:relative; flex:1; width:95%; display:flex; flex-wrap:wrap; gap:20px; align-content:flex-start; padding:10px; overflow-y:auto; background: url('https://i.imgur.com/w1oG5Xu.jpg') no-repeat center top; background-size: cover; border-radius:15px;}
-.trophy-node {width:80px; height:80px; border-radius:50%; background:#ddd; display:flex; justify-content:center; align-items:center; font-size:18px; cursor:pointer; position:relative; transition: background .3s;}
-.trophy-node.completed{background:#f59e0b;color:white;}
-.trophy-node span {position:absolute; bottom:-18px; font-size:12px; text-align:center; width:100%;}
-table {width:90%; border-collapse:collapse; margin-top:10px;}
-th, td {border:1px solid #ccc; padding:5px; text-align:center;}
-#levelDisplay {position:fixed; bottom:10px; right:10px; background:#6366f1; color:white; padding:8px 12px; border-radius:10px; font-weight:bold;}
+<!-- Firebase 8 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<style>
+/* RESET & BASE */
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Arial',sans-serif;}
+body{background:#1e1e2f;color:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh;overflow-x:hidden;}
+
+/* CARD FULLSCREEN */
+.card{background:linear-gradient(135deg,#ffcc00,#ff6b6b);width:100%;max-width:800px;padding:20px;border-radius:20px;box-shadow:0 10px 20px rgba(0,0,0,.5);position:relative;display:flex;flex-direction:column;align-items:center;min-height:90vh;transition:all .5s ease;}
+.card h1,h2,h3{margin-bottom:15px;text-align:center;}
+
+/* INPUTS E BOTÕES */
+input,select,button{padding:12px;margin:5px 0;border-radius:12px;border:none;font-size:16px;width:100%;max-width:300px;}
+button{cursor:pointer;font-weight:bold;transition:transform .2s;}
+button:hover{transform:scale(1.05);}
+.btn-login{background:#6c5ce7;color:white;}
+.btn-create{background:#00b894;color:white;}
+.btn-logout{background:#d63031;color:white;}
+.icon-btn{width:50px;height:50px;background:#fdcb6e;color:#2d3436;border-radius:50%;display:flex;justify-content:center;align-items:center;font-size:24px;margin:5px;cursor:pointer;transition:all .3s;}
+.icon-btn:hover{transform:scale(1.2);}
+
+/* TRILHA DE TROFÉUS */
+#trophyPath{display:flex;flex-wrap:wrap;justify-content:space-between;width:100%;margin:20px 0;}
+.trophy-node{width:60px;height:60px;border-radius:50%;background:#636e72;display:flex;justify-content:center;align-items:center;font-size:24px;margin:10px;transition:all .3s;}
+.trophy-node.completed{background:#ffeaa7;color:#2d3436;}
+.trophy-node span{display:block;text-align:center;font-size:12px;margin-top:5px;color:#fff;}
+
+/* MISSÕES E RECOMPENSAS */
+.task, .reward-item{background:#fd79a8;color:#2d3436;padding:10px 15px;border-radius:15px;margin:10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:all .3s;}
+.task.completed{background:#00b894;color:white;}
+.reward-item{background:#ffeaa7;color:#2d3436;}
+.task button,.reward-item button{background:#00b894;color:white;border-radius:12px;padding:5px 10px;cursor:pointer;transition:all .2s;}
+.task button:hover,.reward-item button:hover{transform:scale(1.1);}
+
+/* BARRA DE XP */
+.progress-bar{width:90%;background:#b2bec3;border-radius:12px;overflow:hidden;margin:10px 0;height:25px;}
+.progress-fill{height:100%;width:0;background:#fdcb6e;text-align:right;padding-right:10px;color:#2d3436;font-weight:bold;transition:width .5s ease;border-radius:12px;}
+
+/* MISSOES COMPLETAS */
+#completedTasks{width:90%;margin-top:10px;text-align:left;}
+
+/* LEVEL */
+#levelDisplay{position:fixed;bottom:10px;right:10px;background:#6c5ce7;padding:10px 15px;border-radius:20px;font-weight:bold;font-size:16px;z-index:1000;}
+
+/* RESPONSIVO */
+@media(max-width:600px){
+  .trophy-node{width:50px;height:50px;font-size:18px;}
+  .task,.reward-item{font-size:14px;padding:8px;}
+  #levelDisplay{font-size:14px;padding:8px 12px;}
+}
 </style>
 </head>
 <body>
 
 <!-- LOGIN -->
-<div class="fullscreen-card" id="loginCard">
-<h1>🚀 Minha Rotina</h1>
-<p>Login para acessar a trilha de troféus</p>
+<div class="card" id="loginCard">
+<h1>🚀 Minha Rotina Gameificada</h1>
+<input id="name" placeholder="Nome">
 <input id="email" placeholder="Email">
 <input id="password" type="password" placeholder="Senha">
-<button onclick="login()">Entrar</button>
-<p id="msg" style="color:red;"></p>
+<button class="btn-create" onclick="register()">Criar conta</button>
+<button class="btn-login" onclick="login()">Entrar</button>
+<p id="msg"></p>
 </div>
 
 <!-- DASHBOARD -->
-<div class="fullscreen-card" id="dashboardCard" style="display:none;">
-<header>
-  <div class="icon-btn" onclick="showTaskSheet()">➕ Criar Missão</div>
-  <div class="icon-btn" onclick="showCompleted()">✔️ Missões Concluídas</div>
-  <div class="icon-btn" onclick="logout()">🚪 Sair</div>
+<div class="card" id="dashboardCard" style="display:none;">
+<header style="width:100%;display:flex;justify-content:space-between;align-items:center;">
+<div class="icon-btn" onclick="showTaskSheet()">➕</div>
+<div class="icon-btn" onclick="showRewards()">🎁</div>
 </header>
+
+<h2>Trilha de Troféus</h2>
 <div class="progress-bar"><div class="progress-fill" id="xpBar">0 XP</div></div>
-<div class="trophy-path" id="trophyPath"></div>
+<div id="trophyPath"></div>
+<div id="tasks"></div>
+<div id="completedTasks"></div>
+<button class="btn-logout" onclick="logout()">🚪 Sair</button>
 </div>
 
-<!-- TASK SHEET -->
-<div class="fullscreen-card" id="taskSheetCard" style="display:none;">
-<header>
-  <div class="icon-btn" onclick="backToDashboard()">⬅ Voltar</div>
+<!-- PLANILHA DE MISSÕES -->
+<div class="card" id="taskSheetCard" style="display:none;">
+<header style="width:100%;display:flex;justify-content:flex-start;">
+<div class="icon-btn" onclick="backToDashboard()">⬅</div>
 </header>
-<h2>📋 Planilha de Missões</h2>
-<table id="taskSheet">
-<tr><th>Nome</th><th>XP</th><th>Horário</th><th>Ações</th></tr>
-</table>
-<h3>Adicionar Missão</h3>
-<input id="newTaskName" placeholder="Nome">
-<input id="newTaskXP" type="number" placeholder="XP">
-<input id="newTaskHour" type="time" placeholder="Horário">
-<button id="saveTaskBtn">Salvar Missão</button>
+<h2>Adicionar Missões</h2>
+<div id="taskSheetList"></div>
 </div>
 
-<!-- COMPLETED -->
-<div class="fullscreen-card" id="completedCard" style="display:none;">
-<header>
-  <div class="icon-btn" onclick="backToDashboard()">⬅ Voltar</div>
+<!-- RECOMPENSAS -->
+<div class="card" id="rewardCard" style="display:none;">
+<header style="width:100%;display:flex;justify-content:flex-start;">
+<div class="icon-btn" onclick="backToDashboard()">⬅</div>
 </header>
-<h2>🎉 Missões Concluídas</h2>
-<div id="completedList"></div>
+<h2>🎁 Recompensas</h2>
+<div id="rewardList"></div>
 </div>
 
 <div id="levelDisplay">Level 1</div>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
 <script>
-// CONFIG
+// ================= FIREBASE =================
 const firebaseConfig = {
   apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
   authDomain: "sua-rotina-em-um-site.firebaseapp.com",
@@ -93,161 +122,196 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
-// ELEMENTS
+// ================= ELEMENTOS =================
 const loginCard = document.getElementById("loginCard");
 const dashboardCard = document.getElementById("dashboardCard");
 const taskSheetCard = document.getElementById("taskSheetCard");
-const completedCard = document.getElementById("completedCard");
+const rewardCard = document.getElementById("rewardCard");
 const msg = document.getElementById("msg");
+const nameInput = document.getElementById("name");
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
-const xpBar = document.getElementById("xpBar");
+const tasksDiv = document.getElementById("tasks");
 const trophyPath = document.getElementById("trophyPath");
-const taskSheet = document.getElementById("taskSheet");
-const completedList = document.getElementById("completedList");
+const completedTasksDiv = document.getElementById("completedTasks");
+const taskSheetList = document.getElementById("taskSheetList");
+const rewardList = document.getElementById("rewardList");
+const xpBar = document.getElementById("xpBar");
 const levelDisplay = document.getElementById("levelDisplay");
 
-let userId, userData={};
+let userId,userData;
 
-// AUTH
+// ================= AUTH =================
 auth.onAuthStateChanged(user=>{
-  if(user){ 
-    userId = user.uid;
-    db.ref('users/'+userId).once('value').then(snap=>{
-      userData = snap.val() || {xp:0,level:1,tasks:{},completed:{}};
-      if(!snap.exists()) db.ref('users/'+userId).set(userData);
-      showDashboard();
-      renderTrail();
-      renderXP();
-    });
-  } else { showLogin(); }
+  if(!user){ showLogin(); return; }
+  userId = user.uid;
+  db.ref('users/'+userId).once('value').then(snap=>{
+    userData = snap.val();
+    if(!userData){
+      userData = {name:nameInput.value,email:emailInput.value,tasks:{},completedTasks:{},rewards:{},xp:0,level:1};
+      db.ref('users/'+userId).set(userData);
+    }
+    showDashboard();
+    loadDashboard();
+  });
 });
 
+// ================= SHOW =================
+function showLogin(){ loginCard.style.display='flex'; dashboardCard.style.display='none'; taskSheetCard.style.display='none'; rewardCard.style.display='none'; }
+function showDashboard(){ loginCard.style.display='none'; dashboardCard.style.display='flex'; taskSheetCard.style.display='none'; rewardCard.style.display='none'; }
+function showTaskSheet(){ loginCard.style.display='none'; dashboardCard.style.display='none'; taskSheetCard.style.display='flex'; rewardCard.style.display='none'; renderTaskSheet(); }
+function showRewards(){ loginCard.style.display='none'; dashboardCard.style.display='none'; taskSheetCard.style.display='none'; rewardCard.style.display='flex'; renderRewards(); }
+function backToDashboard(){ showDashboard(); loadDashboard(); }
+
+// ================= REGISTER/LOGIN =================
+function register(){
+  const name=nameInput.value.trim(),email=emailInput.value.trim(),password=passwordInput.value;
+  if(!name||!email||!password){ msg.innerText='Preencha todos os campos!'; return; }
+  auth.createUserWithEmailAndPassword(email,password)
+  .then(cred=>{
+    userId=cred.user.uid;
+    userData={name,email,tasks:{},completedTasks:{},rewards:{},xp:0,level:1};
+    db.ref('users/'+userId).set(userData);
+    showDashboard();
+    loadDashboard();
+  }).catch(e=>msg.innerText=e.message);
+}
+
 function login(){
-  const email = emailInput.value.trim();
-  const password = passwordInput.value;
-  if(!email||!password){ msg.innerText="Preencha todos os campos!"; return; }
+  const email=emailInput.value.trim(),password=passwordInput.value;
+  if(!email||!password){ msg.innerText='Preencha todos os campos!'; return; }
   auth.signInWithEmailAndPassword(email,password)
-    .then(cred=>{
-      userId = cred.user.uid;
-      db.ref('users/'+userId).once('value').then(snap=>{
-        userData = snap.val() || {xp:0,level:1,tasks:{},completed:{}};
-        showDashboard();
-        renderTrail();
-        renderXP();
-      });
-    }).catch(e=>msg.innerText=e.message);
+  .then(cred=>{
+    userId=cred.user.uid;
+    db.ref('users/'+userId).once('value').then(snap=>{
+      userData=snap.val();
+      showDashboard();
+      loadDashboard();
+    });
+  }).catch(e=>msg.innerText=e.message);
 }
 
-function showLogin(){ loginCard.style.display='flex'; dashboardCard.style.display='none'; taskSheetCard.style.display='none'; completedCard.style.display='none'; }
-function showDashboard(){ loginCard.style.display='none'; dashboardCard.style.display='flex'; taskSheetCard.style.display='none'; completedCard.style.display='none'; }
-function showTaskSheet(){ loginCard.style.display='none'; dashboardCard.style.display='none'; taskSheetCard.style.display='flex'; completedCard.style.display='none'; renderTaskSheet(); }
-function showCompleted(){ loginCard.style.display='none'; dashboardCard.style.display='none'; taskSheetCard.style.display='none'; completedCard.style.display='flex'; renderCompleted(); }
-function backToDashboard(){ showDashboard(); renderTrail(); renderXP(); }
+// ================= DASHBOARD =================
+function loadDashboard(){
+  renderTasks();
+  renderTrophy();
+  renderXP();
+  renderCompleted();
+  renderLevel();
+}
 
-// TASKS
-function renderTaskSheet(){
-  taskSheet.innerHTML = '<tr><th>Nome</th><th>XP</th><th>Horário</th><th>Ações</th></tr>';
-  Object.keys(userData.tasks).sort((a,b)=>userData.tasks[a].hour.localeCompare(userData.tasks[b].hour))
-  .forEach(key=>{
-    const t = userData.tasks[key];
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${t.name}</td><td>${t.xp}</td><td>${t.hour}</td><td><button onclick="deleteTask('${key}')">❌</button></td>`;
-    taskSheet.appendChild(tr);
+// Renderização das tarefas na trilha
+function renderTasks(){
+  tasksDiv.innerHTML='';
+  Object.keys(userData.tasks).sort((a,b)=>userData.tasks[a].time-userData.tasks[b].time).forEach(key=>{
+    const t=userData.tasks[key];
+    const div=document.createElement('div');
+    div.className='task';
+    div.innerHTML=`<span>${t.name}</span>`;
+    if(!t.done){
+      const btn=document.createElement('button');
+      btn.innerText='Concluir';
+      btn.onclick=()=>completeTask(key);
+      div.appendChild(btn);
+    } else div.classList.add('completed');
+    tasksDiv.appendChild(div);
   });
 }
 
-document.getElementById("saveTaskBtn").onclick = ()=>{
-  const name = document.getElementById("newTaskName").value.trim();
-  const xp = parseInt(document.getElementById("newTaskXP").value);
-  const hour = document.getElementById("newTaskHour").value;
-  if(!name||isNaN(xp)||!hour){ alert("Preencha todos os campos"); return; }
-  const key='task_'+Date.now();
-  if(!userData.tasks) userData.tasks={};
-  userData.tasks[key]={name:name,xp:xp,hour:hour,done:false};
-  db.ref('users/'+userId+'/tasks/'+key).set(userData.tasks[key]).then(()=>{
-    document.getElementById("newTaskName").value='';
-    document.getElementById("newTaskXP").value='';
-    document.getElementById("newTaskHour").value='';
-    renderTaskSheet();
-    renderTrail();
-  });
-};
-
-function deleteTask(key){
-  delete userData.tasks[key];
-  db.ref('users/'+userId+'/tasks/'+key).remove().then(()=>{
-    renderTaskSheet();
-    renderTrail();
+// Tarefas completadas
+function renderCompleted(){
+  completedTasksDiv.innerHTML='';
+  Object.keys(userData.completedTasks).forEach(key=>{
+    const c=userData.completedTasks[key];
+    completedTasksDiv.innerHTML+=`<div>${c.name} - XP:${c.xp} - ${c.date}</div>`;
   });
 }
 
-// TRAIL
-function renderTrail(){
+// Completar tarefa
+function completeTask(key){
+  const t=userData.tasks[key];
+  t.done=true;
+  userData.xp+=t.xp;
+  if(!userData.completedTasks[key]) userData.completedTasks[key]={name:t.name,xp:t.xp,count:1,date:new Date().toLocaleString()};
+  else{userData.completedTasks[key].count+=1;userData.completedTasks[key].xp+=t.xp;userData.completedTasks[key].date=new Date().toLocaleString();}
+  db.ref('users/'+userId).set(userData);
+  loadDashboard();
+}
+
+// Renderizar trilha
+function renderTrophy(){
   trophyPath.innerHTML='';
-  const sortedKeys = Object.keys(userData.tasks).sort((a,b)=>userData.tasks[a].hour.localeCompare(userData.tasks[b].hour));
-  sortedKeys.forEach(key=>{
+  Object.keys(userData.tasks).sort((a,b)=>userData.tasks[a].time-userData.tasks[b].time).forEach(key=>{
     const t=userData.tasks[key];
     const node=document.createElement('div');
     node.className='trophy-node';
     if(t.done) node.classList.add('completed');
     node.innerHTML='🏆<span>'+t.name+'</span>';
-    node.onclick=()=>{
-      if(!t.done){
-        t.done=true;
-        userData.xp += t.xp;
-        const today = new Date().toLocaleDateString();
-        if(!userData.completed[t.name]) userData.completed[t.name]={total:0,dates:[]};
-        userData.completed[t.name].total +=1;
-        userData.completed[t.name].dates.push(today);
-        db.ref('users/'+userId).set(userData).then(()=>{
-          renderTrail();
-          renderXP();
-          renderCompleted();
-        });
-      }
-    };
     trophyPath.appendChild(node);
   });
 }
 
-// COMPLETED
-function renderCompleted(){
-  completedList.innerHTML='';
-  Object.keys(userData.completed).forEach(name=>{
-    const c=userData.completed[name];
-    const totalXP = c.total * (Object.values(userData.tasks).find(t=>t.name===name)?.xp || 0);
-    const div = document.createElement('div');
-    div.innerHTML=`<b>${name}</b> - XP acumulado: ${totalXP} <br>Feitas em: ${c.dates.join(', ')}`;
-    completedList.appendChild(div);
+// Render XP
+function renderXP(){
+  const percent=(userData.xp%1000)/1000*100;
+  xpBar.style.width=percent+'%';
+  xpBar.innerText=userData.xp+' XP';
+}
+
+// Render level
+function renderLevel(){ levelDisplay.innerText='Level '+userData.level; }
+
+// ================= PLANILHA DE MISSÕES =================
+function renderTaskSheet(){
+  taskSheetList.innerHTML='';
+  Object.keys(userData.tasks).sort((a,b)=>userData.tasks[a].time-userData.tasks[b].time).forEach(key=>{
+    const t=userData.tasks[key];
+    const div=document.createElement('div');
+    div.className='task';
+    div.innerHTML=`<span>${t.name} - Horário: ${t.timeStr || ''} - XP:${t.xp}</span>`;
+    taskSheetList.appendChild(div);
+  });
+  // Botão adicionar nova tarefa
+  const btn=document.createElement('button');
+  btn.innerText='➕ Adicionar Missão';
+  btn.onclick=()=>{
+    const name=prompt('Nome da missão:');
+    const xp=parseInt(prompt('XP da missão:'));
+    const timeStr=prompt('Horário (ex: 08:00):');
+    const timeParts=timeStr.split(':');
+    const time=new Date();time.setHours(parseInt(timeParts[0]),parseInt(timeParts[1]));
+    const key='task_'+Date.now();
+    userData.tasks[key]={name,xp,time:time.getTime(),timeStr};
+    db.ref('users/'+userId+'/tasks/'+key).set(userData.tasks[key]).then(()=>renderTaskSheet());
+  };
+  taskSheetList.appendChild(btn);
+}
+
+// ================= RECOMPENSAS =================
+function renderRewards(){
+  rewardList.innerHTML='';
+  Object.keys(userData.rewards||{}).forEach(key=>{
+    const r=userData.rewards[key];
+    const div=document.createElement('div');
+    div.className='reward-item';
+    div.innerHTML=`<span>${r.name} - XP Necessário:${r.xpRequired} - Coletado:${r.collected || 0}</span>`;
+    const btn=document.createElement('button');
+    btn.innerText='🎁 Coletar';
+    btn.onclick=()=>{
+      if(userData.xp>=r.xpRequired){
+        userData.xp-=r.xpRequired;
+        r.collected=r.collected? r.collected+1:1;
+        db.ref('users/'+userId+'/rewards/'+key).set(r).then(()=>{renderRewards(); renderXP(); renderLevel();});
+      }else alert('XP insuficiente!');
+    };
+    div.appendChild(btn);
+    rewardList.appendChild(div);
   });
 }
 
-// XP & LEVEL
-function renderXP(){
-  xpBar.style.width = (userData.xp%1000)/10 + '%';
-  xpBar.innerText = userData.xp+' XP';
-  levelDisplay.innerText = 'Level '+Math.floor(userData.xp/1000 +1);
-}
-
-// LOGOUT
+// ================= LOGOUT =================
 function logout(){ auth.signOut().then(showLogin); }
 
-// RESET DAILY
-function resetTasks(){
-  Object.keys(userData.tasks).forEach(k=>userData.tasks[k].done=false);
-  db.ref('users/'+userId+'/tasks').set(userData.tasks).then(()=>renderTrail());
-}
-
-function scheduleDailyReset(){
-  const now = new Date();
-  const millisTillMidnight = new Date(now.getFullYear(),now.getMonth(),now.getDate()+1,0,0,0,0)-now;
-  setTimeout(()=>{
-    resetTasks();
-    scheduleDailyReset();
-  },millisTillMidnight);
-}
-scheduleDailyReset();
 </script>
 </body>
 </html>
