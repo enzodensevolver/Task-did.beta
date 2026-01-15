@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Rotina Gameificada</title>
+<title>Minha Rotina – Trilha</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <!-- Firebase v8 -->
@@ -14,74 +14,107 @@
 *{box-sizing:border-box}
 body{
   margin:0;
-  font-family:Arial, sans-serif;
+  font-family:'Arial',sans-serif;
+  background:linear-gradient(180deg,#1e88e5,#42a5f5);
   min-height:100vh;
-  background:linear-gradient(180deg,#2196f3,#00bcd4);
+  overflow-x:hidden;
 }
-.screen{display:none;min-height:100vh;padding:20px}
+
+/* TELAS */
+.screen{display:none;min-height:100vh}
 .screen.active{display:block}
 
+/* LOGIN */
 .card{
   background:#fff;
   max-width:420px;
-  margin:60px auto;
+  margin:80px auto;
   padding:25px;
-  border-radius:16px;
-  box-shadow:0 20px 40px rgba(0,0,0,.25);
+  border-radius:18px;
+  box-shadow:0 20px 40px rgba(0,0,0,.3);
 }
-
 input,button{
   width:100%;
   padding:12px;
   margin-top:10px;
-  border-radius:8px;
+  border-radius:10px;
   border:1px solid #ccc;
   font-size:16px;
 }
-
 button{border:none;font-weight:bold;cursor:pointer}
-.btn-create{background:#4caf50;color:#fff}
-.btn-login{background:#2196f3;color:#fff}
-.btn-logout{background:#f44336;color:#fff}
+.btn-create{background:#43a047;color:white}
+.btn-login{background:#1e88e5;color:white}
 
-.header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  color:white;
+/* TRILHA */
+#trail{
+  position:relative;
+  width:100%;
+  min-height:100vh;
+  padding:100px 0 150px;
 }
-.level{
-  background:rgba(255,255,255,.25);
-  padding:8px 14px;
-  border-radius:20px;
+.node{
+  width:90px;
+  margin:40px auto;
+  text-align:center;
+}
+.node-icon{
+  width:80px;
+  height:80px;
+  border-radius:50%;
+  background:#ffca28;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:36px;
+  box-shadow:0 8px 16px rgba(0,0,0,.25);
+  cursor:pointer;
+}
+.node.done .node-icon{
+  background:#81c784;
+}
+.node-name{
+  margin-top:8px;
+  color:white;
   font-weight:bold;
 }
 
-.panel{
-  background:white;
-  margin-top:20px;
-  padding:20px;
-  border-radius:16px;
+/* ZIG ZAG */
+.node:nth-child(even){transform:translateX(120px)}
+.node:nth-child(odd){transform:translateX(-120px)}
+
+/* LEVEL */
+#levelBox{
+  position:fixed;
+  bottom:15px;
+  right:15px;
+  background:#fff;
+  padding:10px 16px;
+  border-radius:20px;
+  font-weight:bold;
+  box-shadow:0 8px 16px rgba(0,0,0,.3);
 }
 
-.task{
-  display:flex;
-  justify-content:space-between;
+/* MODAL */
+#modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  display:none;
   align-items:center;
-  background:#f0f0f0;
-  padding:10px;
-  border-radius:8px;
-  margin-top:8px;
+  justify-content:center;
 }
-.task button{
-  padding:6px 10px;
-  border-radius:6px;
-  margin-left:5px;
+#modalContent{
+  background:#fff;
+  padding:20px;
+  border-radius:16px;
+  width:300px;
+  text-align:center;
+}
+#modalContent button{
+  margin-top:15px;
+  background:#43a047;
   color:white;
 }
-.btn-ok{background:#4caf50}
-.btn-del{background:#f44336}
-#msg{text-align:center;margin-top:10px}
 </style>
 </head>
 
@@ -100,132 +133,104 @@ button{border:none;font-weight:bold;cursor:pointer}
   </div>
 </div>
 
-<!-- DASHBOARD -->
-<div id="dashboardScreen" class="screen">
-  <div class="header">
-    <h2>📋 Missões</h2>
-    <div class="level" id="levelLabel">Lv 1</div>
-  </div>
+<!-- TRILHA -->
+<div id="trailScreen" class="screen">
+  <div id="trail"></div>
+  <div id="levelBox">Lv 1</div>
+</div>
 
-  <div class="panel">
-    <h3>➕ Criar missão</h3>
-    <input id="taskName" placeholder="Nome da missão">
-    <input id="taskXP" type="number" placeholder="XP da missão">
-    <button onclick="createTask()">Adicionar</button>
+<!-- MODAL -->
+<div id="modal">
+  <div id="modalContent">
+    <h3 id="modalTitle"></h3>
+    <p id="modalXP"></p>
+    <button onclick="confirmTask()">Concluir</button>
   </div>
-
-  <div class="panel">
-    <h3>🗂 Missões ativas</h3>
-    <div id="taskList"></div>
-  </div>
-
-  <button class="btn-logout" onclick="logout()">Sair</button>
 </div>
 
 <script>
-// ================= FIREBASE =================
-const firebaseConfig = {
-  apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
-  authDomain: "sua-rotina-em-um-site.firebaseapp.com",
-  databaseURL: "https://sua-rotina-em-um-site-default-rtdb.firebaseio.com",
-  projectId: "sua-rotina-em-um-site",
-  storageBucket: "sua-rotina-em-um-site.appspot.com",
-  messagingSenderId: "774359583618",
-  appId: "1:774359583618:web:3ccf1600d1ab1dc6eadd9b"
+// FIREBASE
+const firebaseConfig={
+  apiKey:"AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
+  authDomain:"sua-rotina-em-um-site.firebaseapp.com",
+  databaseURL:"https://sua-rotina-em-um-site-default-rtdb.firebaseio.com",
+  projectId:"sua-rotina-em-um-site",
+  storageBucket:"sua-rotina-em-um-site.appspot.com",
+  messagingSenderId:"774359583618",
+  appId:"1:774359583618:web:3ccf1600d1ab1dc6eadd9b"
 };
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.database();
+const auth=firebase.auth();
+const db=firebase.database();
 
-// ================= VARIÁVEIS =================
-const loginScreen = document.getElementById("loginScreen");
-const dashboardScreen = document.getElementById("dashboardScreen");
-const taskList = document.getElementById("taskList");
-const levelLabel = document.getElementById("levelLabel");
-const msg = document.getElementById("msg");
+const loginScreen=document.getElementById("loginScreen");
+const trailScreen=document.getElementById("trailScreen");
+const trail=document.getElementById("trail");
+const levelBox=document.getElementById("levelBox");
+const modal=document.getElementById("modal");
 
-let userId;
-let userData;
+let userId,userData,selectedTask=null;
 
-// ================= AUTH =================
+// AUTH
 auth.onAuthStateChanged(user=>{
   if(user){
     userId=user.uid;
-    db.ref("users/"+userId).once("value").then(snap=>{
-      userData=snap.val();
-      showDashboard();
-      renderTasks();
-      updateLevel();
+    db.ref("users/"+userId).once("value").then(s=>{
+      userData=s.val();
+      showTrail();
+      renderTrail();
     });
   }
 });
 
-// ================= TELAS =================
-function showDashboard(){
+function showTrail(){
   loginScreen.classList.remove("active");
-  dashboardScreen.classList.add("active");
+  trailScreen.classList.add("active");
 }
 
-// ================= LOGIN =================
+// LOGIN
 function register(){
-  const name=document.getElementById("name").value.trim();
-  const email=document.getElementById("email").value.trim();
-  const password=document.getElementById("password").value;
-  if(!name||!email||!password){msg.innerText="Preencha tudo";return;}
-
-  auth.createUserWithEmailAndPassword(email,password)
-    .then(cred=>{
-      return db.ref("users/"+cred.user.uid).set({
-        name,email,xp:0,level:1,tasks:{}
-      });
-    })
-    .catch(e=>msg.innerText=e.message);
+  auth.createUserWithEmailAndPassword(
+    email.value,password.value
+  ).then(c=>{
+    return db.ref("users/"+c.user.uid).set({
+      name:name.value,
+      xp:0,
+      level:1,
+      tasks:{}
+    });
+  });
 }
-
 function login(){
-  auth.signInWithEmailAndPassword(
-    document.getElementById("email").value,
-    document.getElementById("password").value
-  ).catch(e=>msg.innerText=e.message);
+  auth.signInWithEmailAndPassword(email.value,password.value);
 }
 
-function logout(){
-  auth.signOut();
-  location.reload();
-}
-
-// ================= MISSÕES =================
-function createTask(){
-  const name=document.getElementById("taskName").value.trim();
-  const xp=parseInt(document.getElementById("taskXP").value);
-  if(!name||isNaN(xp))return;
-
-  const id="task_"+Date.now();
-  userData.tasks[id]={name,xp,done:false};
-  saveUser();
-  renderTasks();
-}
-
-function renderTasks(){
-  taskList.innerHTML="";
+// TRILHA
+function renderTrail(){
+  trail.innerHTML="";
   for(let id in userData.tasks){
     const t=userData.tasks[id];
     if(t.done)continue;
 
-    const div=document.createElement("div");
-    div.className="task";
-    div.innerHTML=`
-      <span>${t.name} (+${t.xp} XP)</span>
-      <div>
-        <button class="btn-ok" onclick="completeTask('${id}')">Concluir</button>
-        <button class="btn-del" onclick="deleteTask('${id}')">Excluir</button>
-      </div>`;
-    taskList.appendChild(div);
+    const node=document.createElement("div");
+    node.className="node";
+    node.innerHTML=`
+      <div class="node-icon">🏆</div>
+      <div class="node-name">${t.name}</div>
+    `;
+    node.onclick=()=>{
+      selectedTask=id;
+      document.getElementById("modalTitle").innerText=t.name;
+      document.getElementById("modalXP").innerText=`+${t.xp} XP`;
+      modal.style.display="flex";
+    };
+    trail.appendChild(node);
   }
+  levelBox.innerText="Lv "+userData.level;
 }
 
-function completeTask(id){
-  const t=userData.tasks[id];
+function confirmTask(){
+  const t=userData.tasks[selectedTask];
   t.done=true;
   userData.xp+=t.xp;
 
@@ -233,24 +238,9 @@ function completeTask(id){
     userData.xp-=1000;
     userData.level++;
   }
-  saveUser();
-  renderTasks();
-  updateLevel();
-}
-
-function deleteTask(id){
-  if(!confirm("Excluir missão?"))return;
-  delete userData.tasks[id];
-  saveUser();
-  renderTasks();
-}
-
-// ================= UTIL =================
-function updateLevel(){
-  levelLabel.innerText="Lv "+userData.level;
-}
-function saveUser(){
   db.ref("users/"+userId).set(userData);
+  modal.style.display="none";
+  renderTrail();
 }
 </script>
 
