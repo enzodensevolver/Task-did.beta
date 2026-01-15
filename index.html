@@ -119,6 +119,18 @@ body {
   color: white;
 }
 
+/* LEVEL */
+#level-box {
+  position: fixed;
+  bottom: 15px;
+  right: 15px;
+  background: white;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-weight: bold;
+  box-shadow: 0 4px 8px rgba(0,0,0,.3);
+}
+
 @keyframes pop {
   from { transform: scale(.6); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
@@ -137,9 +149,12 @@ body {
 <div id="modal">
   <div id="modal-content">
     <h2 id="modal-title"></h2>
+    <p>+100 Pontos de Rotina</p>
     <button id="complete-btn">Concluir</button>
   </div>
 </div>
+
+<div id="level-box"></div>
 
 <script>
 /* ===== DADOS ===== */
@@ -149,11 +164,22 @@ let missions = JSON.parse(localStorage.getItem("missions")) || [
   { id: 3, name: "Fazer tarefa", icon: "📚", done: false }
 ];
 
+let points = Number(localStorage.getItem("points")) || 0;
 let selectedMission = null;
 
 /* ===== FUNÇÕES ===== */
 function save() {
   localStorage.setItem("missions", JSON.stringify(missions));
+  localStorage.setItem("points", points);
+}
+
+function getLevel() {
+  return Math.floor(points / 1000) + 1;
+}
+
+function renderLevel() {
+  document.getElementById("level-box").innerText =
+    `Level ${getLevel()} • ${points} pts`;
 }
 
 function render() {
@@ -174,6 +200,8 @@ function render() {
 
       trail.appendChild(div);
     });
+
+  renderLevel();
 }
 
 function openMission(id) {
@@ -183,7 +211,11 @@ function openMission(id) {
 }
 
 document.getElementById("complete-btn").onclick = () => {
+  if (selectedMission.done) return;
+
   selectedMission.done = true;
+  points += 100;
+
   save();
   closeModal();
   render();
@@ -208,7 +240,7 @@ function addMission() {
   render();
 }
 
-/* RESET À MEIA-NOITE */
+/* RESET DIÁRIO */
 function checkReset() {
   const last = localStorage.getItem("lastReset");
   const today = new Date().toDateString();
