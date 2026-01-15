@@ -18,23 +18,27 @@ body {
   font-family: Arial, sans-serif;
   background: linear-gradient(180deg, #2196f3, #00bcd4);
   min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
+/* ===== TELAS ===== */
+.screen {
+  display: none;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.screen.active {
+  display: block;
+}
+
+/* ===== LOGIN ===== */
 .card {
   background: white;
-  width: 100%;
   max-width: 420px;
+  margin: 60px auto;
   padding: 25px;
   border-radius: 16px;
   box-shadow: 0 20px 40px rgba(0,0,0,.25);
-}
-
-h1 {
-  text-align: center;
-  margin-bottom: 10px;
 }
 
 input, button {
@@ -47,47 +51,93 @@ input, button {
 }
 
 button {
-  border: none;
   cursor: pointer;
+  border: none;
   font-weight: bold;
 }
 
-.btn-create {
-  background: #4caf50;
+.btn-create { background: #4caf50; color: white; }
+.btn-login { background: #2196f3; color: white; }
+.btn-logout { background: #f44336; color: white; }
+
+#msg { text-align: center; margin-top: 10px; }
+
+/* ===== DASHBOARD ===== */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   color: white;
 }
 
-.btn-login {
-  background: #2196f3;
-  color: white;
+.level {
+  background: rgba(255,255,255,.2);
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-weight: bold;
 }
 
-#msg {
-  margin-top: 10px;
-  color: red;
-  text-align: center;
+.panel {
+  background: white;
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 16px;
+}
+
+.task {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f0f0f0;
+  padding: 10px;
+  border-radius: 8px;
+  margin-top: 8px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="card" id="loginCard">
-  <h1>🎮 Minha Rotina</h1>
+<!-- ===== LOGIN ===== -->
+<div id="loginScreen" class="screen active">
+  <div class="card">
+    <h2>🎮 Minha Rotina</h2>
 
-  <input id="name" placeholder="Nome">
-  <input id="email" placeholder="Email">
-  <input id="password" type="password" placeholder="Senha">
+    <input id="name" placeholder="Nome">
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Senha">
 
-  <button class="btn-create" onclick="register()">Criar conta</button>
-  <button class="btn-login" onclick="login()">Entrar</button>
+    <button class="btn-create" onclick="register()">Criar conta</button>
+    <button class="btn-login" onclick="login()">Entrar</button>
 
-  <div id="msg"></div>
+    <div id="msg"></div>
+  </div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div id="dashboardScreen" class="screen">
+  <div class="header">
+    <h2>📋 Minhas Missões</h2>
+    <div class="level" id="levelLabel">Lv 1</div>
+  </div>
+
+  <div class="panel">
+    <h3>➕ Criar missão</h3>
+    <input id="taskName" placeholder="Nome da missão">
+    <input id="taskXP" type="number" placeholder="XP da missão">
+    <button onclick="createTask()">Adicionar</button>
+  </div>
+
+  <div class="panel">
+    <h3>🗂 Missões</h3>
+    <div id="taskList"></div>
+  </div>
+
+  <button class="btn-logout" onclick="logout()">Sair</button>
 </div>
 
 <script>
-/* ================= FIREBASE ================= */
-
+/* ===== FIREBASE ===== */
 const firebaseConfig = {
   apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
   authDomain: "sua-rotina-em-um-site.firebaseapp.com",
@@ -103,19 +153,40 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
-/* ================= ELEMENTOS ================= */
-
-const nameInput = document.getElementById("name");
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
+/* ===== ELEMENTOS ===== */
+const loginScreen = document.getElementById("loginScreen");
+const dashboardScreen = document.getElementById("dashboardScreen");
 const msg = document.getElementById("msg");
+const taskList = document.getElementById("taskList");
+const levelLabel = document.getElementById("levelLabel");
 
-/* ================= FUNÇÕES ================= */
+let userId;
+let userData;
 
+/* ===== AUTH ===== */
+auth.onAuthStateChanged(user => {
+  if (user) {
+    userId = user.uid;
+    db.ref("users/" + userId).once("value").then(snap => {
+      userData = snap.val();
+      showDashboard();
+      renderTasks();
+      updateLevel();
+    });
+  }
+});
+
+/* ===== TELAS ===== */
+function showDashboard() {
+  loginScreen.classList.remove("active");
+  dashboardScreen.classList.add("active");
+}
+
+/* ===== LOGIN / REGISTER ===== */
 function register() {
-  const name = nameInput.value.trim();
-  const email = emailInput.value.trim();
-  const password = passwordInput.value;
+  const name = document.getElementById("name").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
 
   if (!name || !email || !password) {
     msg.innerText = "Preencha todos os campos";
@@ -125,40 +196,82 @@ function register() {
   auth.createUserWithEmailAndPassword(email, password)
     .then(cred => {
       return db.ref("users/" + cred.user.uid).set({
-        name: name,
-        email: email,
+        name,
+        email,
         xp: 0,
         level: 1,
-        createdAt: Date.now()
+        tasks: {}
       });
     })
-    .then(() => {
-      msg.style.color = "green";
-      msg.innerText = "Conta criada com sucesso!";
-    })
-    .catch(err => {
-      msg.innerText = err.message;
-    });
+    .catch(err => msg.innerText = err.message);
 }
 
 function login() {
-  const email = emailInput.value.trim();
-  const password = passwordInput.value;
-
-  if (!email || !password) {
-    msg.innerText = "Informe email e senha";
-    return;
-  }
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
 
   auth.signInWithEmailAndPassword(email, password)
-    .then(() => {
-      msg.style.color = "green";
-      msg.innerText = "Login realizado!";
-      // aqui depois vamos redirecionar para a trilha
-    })
-    .catch(err => {
-      msg.innerText = err.message;
-    });
+    .catch(err => msg.innerText = err.message);
+}
+
+function logout() {
+  auth.signOut();
+  location.reload();
+}
+
+/* ===== MISSÕES ===== */
+function createTask() {
+  const name = document.getElementById("taskName").value.trim();
+  const xp = parseInt(document.getElementById("taskXP").value);
+
+  if (!name || isNaN(xp)) return;
+
+  const id = "task_" + Date.now();
+  userData.tasks[id] = { name, xp, done: false };
+
+  saveUser();
+  renderTasks();
+}
+
+function renderTasks() {
+  taskList.innerHTML = "";
+
+  for (let id in userData.tasks) {
+    const t = userData.tasks[id];
+    if (t.done) continue;
+
+    const div = document.createElement("div");
+    div.className = "task";
+    div.innerHTML = `
+      <span>${t.name} (+${t.xp} XP)</span>
+      <button onclick="completeTask('${id}')">Concluir</button>
+    `;
+    taskList.appendChild(div);
+  }
+}
+
+function completeTask(id) {
+  const task = userData.tasks[id];
+  task.done = true;
+  userData.xp += task.xp;
+
+  while (userData.xp >= 1000) {
+    userData.xp -= 1000;
+    userData.level++;
+  }
+
+  saveUser();
+  renderTasks();
+  updateLevel();
+}
+
+/* ===== UTIL ===== */
+function updateLevel() {
+  levelLabel.innerText = "Lv " + userData.level;
+}
+
+function saveUser() {
+  db.ref("users/" + userId).set(userData);
 }
 </script>
 
