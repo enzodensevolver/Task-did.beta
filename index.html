@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Sua Rotina Gamificada</title>
+<title>Rotina Gameificada</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <!-- Firebase v8 -->
@@ -11,135 +11,60 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <style>
-html, body {
+* { box-sizing: border-box; }
+
+body {
   margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
   font-family: Arial, sans-serif;
-  background: linear-gradient(#1e90ff, #00bfff);
-  overflow: hidden;
-}
-
-/* ---------- TELAS ---------- */
-.screen {
-  display: none;
-  width: 100%;
-  height: 100%;
-}
-
-.active {
+  background: linear-gradient(180deg, #2196f3, #00bcd4);
+  min-height: 100vh;
   display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-/* ---------- LOGIN ---------- */
-#loginScreen {
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
+.card {
+  background: white;
+  width: 100%;
+  max-width: 420px;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0,0,0,.25);
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 10px;
 }
 
 input, button {
+  width: 100%;
   padding: 12px;
-  margin: 6px;
+  margin-top: 10px;
   border-radius: 8px;
-  border: none;
+  border: 1px solid #ccc;
   font-size: 16px;
 }
 
 button {
-  background: #2ecc71;
-  color: white;
+  border: none;
   cursor: pointer;
+  font-weight: bold;
 }
 
-button:hover {
-  opacity: 0.9;
-}
-
-/* ---------- DASHBOARD ---------- */
-#dashboard {
-  flex-direction: column;
-  position: relative;
-}
-
-/* Top buttons */
-.topLeft {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.iconBtn {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  font-size: 24px;
-}
-
-/* Level */
-#levelBox {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  background: rgba(0,0,0,0.3);
-  padding: 10px;
-  border-radius: 10px;
+.btn-create {
+  background: #4caf50;
   color: white;
 }
 
-/* ---------- TRILHA ---------- */
-#trail {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+.btn-login {
+  background: #2196f3;
+  color: white;
 }
 
-.mission {
-  background: white;
-  border-radius: 12px;
-  padding: 10px;
-  margin: 10px;
-  width: 200px;
-  text-align: center;
-  cursor: pointer;
-}
-
-/* ---------- MODAL ---------- */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
-  display: none;
-  align-items: center;
-  justify-content: center;
-}
-
-.modalContent {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  width: 300px;
-}
-
-/* ---------- TABLE ---------- */
-table {
-  width: 100%;
-  background: white;
-  border-radius: 10px;
-}
-
-th, td {
-  padding: 8px;
-  border-bottom: 1px solid #ccc;
+#msg {
+  margin-top: 10px;
+  color: red;
   text-align: center;
 }
 </style>
@@ -147,157 +72,94 @@ th, td {
 
 <body>
 
-<!-- LOGIN -->
-<div id="loginScreen" class="screen active">
-  <h1>Entrar</h1>
+<div class="card" id="loginCard">
+  <h1>🎮 Minha Rotina</h1>
+
+  <input id="name" placeholder="Nome">
   <input id="email" placeholder="Email">
   <input id="password" type="password" placeholder="Senha">
-  <button onclick="login()">Entrar</button>
+
+  <button class="btn-create" onclick="register()">Criar conta</button>
+  <button class="btn-login" onclick="login()">Entrar</button>
+
+  <div id="msg"></div>
 </div>
 
-<!-- DASHBOARD -->
-<div id="dashboard" class="screen">
-  <div class="topLeft">
-    <button class="iconBtn" onclick="openMissionManager()">+</button>
-    <button class="iconBtn" onclick="openCompleted()">✔</button>
-    <button class="iconBtn" onclick="openRewards()">🎁</button>
-  </div>
-
-  <div id="trail"></div>
-
-  <div id="levelBox">
-    Level: <span id="level">1</span><br>
-    XP: <span id="xp">0</span>
-  </div>
-</div>
-
-<!-- MODALS -->
-<div id="missionModal" class="modal">
-  <div class="modalContent">
-    <h3 id="missionTitle"></h3>
-    <button onclick="completeMission()">Concluir</button>
-    <button onclick="closeModal()">Voltar</button>
-  </div>
-</div>
-
-<!-- SCRIPT -->
 <script>
-/* ---------- FIREBASE ---------- */
-firebase.initializeApp({
+/* ================= FIREBASE ================= */
+
+const firebaseConfig = {
   apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
   authDomain: "sua-rotina-em-um-site.firebaseapp.com",
   databaseURL: "https://sua-rotina-em-um-site-default-rtdb.firebaseio.com",
-  projectId: "sua-rotina-em-um-site"
-});
+  projectId: "sua-rotina-em-um-site",
+  storageBucket: "sua-rotina-em-um-site.appspot.com",
+  messagingSenderId: "774359583618",
+  appId: "1:774359583618:web:3ccf1600d1ab1dc6eadd9b"
+};
+
+firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 const db = firebase.database();
 
-let currentUser = null;
-let selectedMission = null;
+/* ================= ELEMENTOS ================= */
 
-/* ---------- AUTH ---------- */
+const nameInput = document.getElementById("name");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const msg = document.getElementById("msg");
+
+/* ================= FUNÇÕES ================= */
+
+function register() {
+  const name = nameInput.value.trim();
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+
+  if (!name || !email || !password) {
+    msg.innerText = "Preencha todos os campos";
+    return;
+  }
+
+  auth.createUserWithEmailAndPassword(email, password)
+    .then(cred => {
+      return db.ref("users/" + cred.user.uid).set({
+        name: name,
+        email: email,
+        xp: 0,
+        level: 1,
+        createdAt: Date.now()
+      });
+    })
+    .then(() => {
+      msg.style.color = "green";
+      msg.innerText = "Conta criada com sucesso!";
+    })
+    .catch(err => {
+      msg.innerText = err.message;
+    });
+}
+
 function login() {
-  const email = email.value;
-  const password = password.value;
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+
+  if (!email || !password) {
+    msg.innerText = "Informe email e senha";
+    return;
+  }
 
   auth.signInWithEmailAndPassword(email, password)
-    .then(res => {
-      currentUser = res.user;
-      showDashboard();
+    .then(() => {
+      msg.style.color = "green";
+      msg.innerText = "Login realizado!";
+      // aqui depois vamos redirecionar para a trilha
     })
-    .catch(() => {
-      auth.createUserWithEmailAndPassword(email, password)
-        .then(res => {
-          currentUser = res.user;
-          initUser();
-          showDashboard();
-        });
+    .catch(err => {
+      msg.innerText = err.message;
     });
 }
-
-function initUser() {
-  db.ref("users/" + currentUser.uid).set({
-    xp: 0,
-    level: 1,
-    lastReset: new Date().toDateString()
-  });
-}
-
-/* ---------- UI ---------- */
-function showDashboard() {
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  dashboard.classList.add("active");
-  loadData();
-}
-
-/* ---------- MISSIONS ---------- */
-function loadData() {
-  resetDaily();
-  loadStats();
-  loadMissions();
-}
-
-function resetDaily() {
-  const today = new Date().toDateString();
-  db.ref("users/" + currentUser.uid + "/lastReset").once("value", snap => {
-    if (snap.val() !== today) {
-      db.ref("completed/" + currentUser.uid).remove();
-      db.ref("users/" + currentUser.uid + "/lastReset").set(today);
-    }
-  });
-}
-
-function loadStats() {
-  db.ref("users/" + currentUser.uid).on("value", snap => {
-    xp.innerText = snap.val().xp;
-    level.innerText = snap.val().level;
-  });
-}
-
-function loadMissions() {
-  trail.innerHTML = "";
-  db.ref("missions/" + currentUser.uid).orderByChild("time").once("value", snap => {
-    snap.forEach(child => {
-      const div = document.createElement("div");
-      div.className = "mission";
-      div.innerText = child.val().name;
-      div.onclick = () => openMission(child.key, child.val());
-      trail.appendChild(div);
-    });
-  });
-}
-
-function openMission(id, data) {
-  selectedMission = { id, data };
-  missionTitle.innerText = data.name;
-  missionModal.style.display = "flex";
-}
-
-function completeMission() {
-  const date = new Date().toISOString();
-  const xpGain = selectedMission.data.xp;
-
-  db.ref("completed/" + currentUser.uid + "/" + selectedMission.id).push(date);
-
-  db.ref("users/" + currentUser.uid).transaction(user => {
-    user.xp += xpGain;
-    user.level = Math.floor(user.xp / 1000) + 1;
-    return user;
-  });
-
-  closeModal();
-  loadMissions();
-}
-
-function closeModal() {
-  missionModal.style.display = "none";
-}
-
-/* ---------- PLACEHOLDERS ---------- */
-function openMissionManager(){ alert("Editor de missões será explicado depois"); }
-function openCompleted(){ alert("Histórico será explicado depois"); }
-function openRewards(){ alert("Recompensas serão explicadas depois"); }
 </script>
 
 </body>
