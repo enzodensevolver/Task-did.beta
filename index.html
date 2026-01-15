@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Trilha da Rotina</title>
 
-<!-- Firebase v8 (compatível com GitHub Pages) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -15,12 +14,10 @@ html,body{
   padding:0;
   width:100%;
   height:100%;
-  font-family:'Arial',sans-serif;
+  font-family:Arial, sans-serif;
   background:linear-gradient(#3b82f6,#1e40af);
-  overflow:hidden;
 }
 
-/* telas */
 .screen{
   position:absolute;
   inset:0;
@@ -31,23 +28,20 @@ html,body{
 
 .hidden{display:none}
 
-/* login */
 .card{
   background:white;
   padding:24px;
   border-radius:20px;
   width:90%;
-  max-width:380px;
-  box-shadow:0 20px 40px rgba(0,0,0,.3);
+  max-width:360px;
 }
 
 input,button{
   width:100%;
   padding:12px;
   margin-top:10px;
-  border-radius:12px;
+  border-radius:10px;
   border:1px solid #ccc;
-  font-size:16px;
 }
 
 button{
@@ -58,86 +52,15 @@ button{
   cursor:pointer;
 }
 
-/* trilha */
-#trail{
-  flex-direction:column;
-  justify-content:flex-start;
-}
-
-.top-left{
-  position:absolute;
-  top:12px;
-  left:12px;
-}
-
-.plus{
-  width:54px;
-  height:54px;
-  border-radius:50%;
-  background:white;
-  color:#2563eb;
-  font-size:34px;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  cursor:pointer;
-}
-
-.path{
-  flex:1;
+#path{
   width:100%;
+  height:100%;
   display:flex;
   flex-direction:column;
-  justify-content:space-around;
-  padding:80px 0;
-}
-
-.node{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-}
-
-.node.left{align-self:flex-start;margin-left:40px}
-.node.right{align-self:flex-end;margin-right:40px}
-
-.circle{
-  width:80px;
-  height:80px;
-  background:#fde047;
-  border-radius:50%;
-  display:flex;
   justify-content:center;
   align-items:center;
-  font-size:32px;
-  cursor:pointer;
-  box-shadow:0 10px 20px rgba(0,0,0,.3);
-}
-
-.name{
-  margin-top:6px;
   color:white;
-  font-weight:bold;
-}
-
-.time{
-  font-size:12px;
-  color:#dbeafe;
-}
-
-.level{
-  position:absolute;
-  bottom:12px;
-  right:12px;
-  background:#0008;
-  color:white;
-  padding:8px 14px;
-  border-radius:20px;
-}
-
-/* editor */
-.editor{
-  flex-direction:column;
+  font-size:24px;
 }
 </style>
 </head>
@@ -158,121 +81,68 @@ button{
 
 <!-- TRILHA -->
 <div id="trail" class="screen hidden">
-  <div class="top-left">
-    <div class="plus" onclick="openEditor()">+</div>
-  </div>
-
-  <div class="path" id="path"></div>
-
-  <div class="level" id="levelBox">Nível 1</div>
-</div>
-
-<!-- CRIAR MISSÃO -->
-<div id="editor" class="screen hidden editor">
-  <div class="card">
-    <h3>Nova Missão</h3>
-    <input id="mName" placeholder="Nome da missão">
-    <input id="mPoints" type="number" placeholder="Pontos de Rotina">
-    <input id="mTime" type="time">
-    <button onclick="addMission()">Salvar</button>
-    <button onclick="back()">Voltar</button>
-  </div>
+  <div id="path">🌟 Bem-vindo à Trilha da Rotina 🌟</div>
 </div>
 
 <script>
 /* FIREBASE */
 firebase.initializeApp({
-  apiKey:"AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
-  authDomain:"sua-rotina-em-um-site.firebaseapp.com",
-  databaseURL:"https://sua-rotina-em-um-site-default-rtdb.firebaseio.com",
-  projectId:"sua-rotina-em-um-site"
+  apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
+  authDomain: "sua-rotina-em-um-site.firebaseapp.com",
+  databaseURL: "https://sua-rotina-em-um-site-default-rtdb.firebaseio.com",
+  projectId: "sua-rotina-em-um-site"
 });
 
-const auth=firebase.auth();
-const db=firebase.database();
+const auth = firebase.auth();
+const db = firebase.database();
 
-let uid,data={missions:{},total:0};
+let uid;
 
-/* AUTH */
-auth.onAuthStateChanged(u=>{
-  if(!u)return;
-  uid=u.uid;
-  db.ref("users/"+uid).once("value").then(s=>{
-    if(!s.exists()){
-      db.ref("users/"+uid).set({missions:{},total:0});
-    }
-    load();
-  });
-});
-
-function login(){
-  auth.signInWithEmailAndPassword(email.value,password.value);
-}
-function register(){
-  auth.createUserWithEmailAndPassword(email.value,password.value);
-}
-
-/* LOAD */
-function load(){
-  db.ref("users/"+uid).on("value",s=>{
-    data=s.val();
-    render();
-    show("trail");
-  });
-}
-
-/* RENDER TRILHA */
-function render(){
-  path.innerHTML="";
-  const entries=Object.entries(data.missions||{})
-    .sort((a,b)=>a[1].time.localeCompare(b[1].time));
-
-  entries.forEach(([id,m],i)=>{
-    if(m.done)return;
-    const n=document.createElement("div");
-    n.className="node "+(i%2?"right":"left");
-    n.innerHTML=`
-      <div class="circle">🌟</div>
-      <div class="name">${m.name}</div>
-      <div class="time">${m.time}</div>
-    `;
-    n.onclick=()=>complete(id);
-    path.appendChild(n);
-  });
-
-  levelBox.innerText="Nível "+(Math.floor((data.total||0)/1000)+1);
-}
-
-/* COMPLETE */
-function complete(id){
-  if(data.missions[id].done)return;
-  data.missions[id].done=true;
-  data.total=(data.total||0)+data.missions[id].points;
-  db.ref("users/"+uid).set(data);
-}
-
-/* ADD */
-function addMission(){
-  const id=Date.now();
-  data.missions[id]={
-    name:mName.value,
-    points:+mPoints.value,
-    time:mTime.value,
-    done:false
-  };
-  db.ref("users/"+uid).set(data);
-  back();
-}
-
-/* UI */
-function openEditor(){show("editor")}
-function back(){show("trail")}
+/* CONTROLE DE TELA */
 function show(id){
-  ["login","trail","editor"].forEach(s=>{
-    document.getElementById(s).classList.add("hidden");
-  });
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("trail").classList.add("hidden");
   document.getElementById(id).classList.remove("hidden");
 }
+
+/* LOGIN */
+function login(){
+  auth.signInWithEmailAndPassword(
+    email.value,
+    password.value
+  ).then(()=>{
+    msg.innerText = "login realizado";
+  }).catch(e=>{
+    msg.innerText = e.message;
+  });
+}
+
+/* REGISTRO */
+function register(){
+  auth.createUserWithEmailAndPassword(
+    email.value,
+    password.value
+  ).catch(e=>{
+    msg.innerText = e.message;
+  });
+}
+
+/* ESTE É O MAIS IMPORTANTE */
+auth.onAuthStateChanged(user=>{
+  if(!user) return;
+
+  uid = user.uid;
+
+  db.ref("users/"+uid).once("value").then(snap=>{
+    if(!snap.exists()){
+      db.ref("users/"+uid).set({
+        total:0,
+        missions:{}
+      });
+    }
+    show("trail"); // 🔥 AQUI A TELA MUDA
+  });
+});
 </script>
 
 </body>
