@@ -1,261 +1,289 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Trilha de Rotina</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rotina Gameificada</title>
+
+<!-- Firebase v8 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <style>
-* {
-  box-sizing: border-box;
-  font-family: 'Arial Rounded MT Bold', Arial, sans-serif;
+*{box-sizing:border-box;font-family:'Trebuchet MS',Arial}
+body{
+  margin:0;
+  width:100vw;
+  height:100vh;
+  background:linear-gradient(180deg,#2563eb,#38bdf8);
+  overflow:hidden;
 }
 
-body {
-  margin: 0;
-  width: 100vw;
-  height: 100vh;
-  background: linear-gradient(#4facfe, #00f2fe);
-  overflow: hidden;
+/* LOGIN */
+#login{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
+.card{
+  background:white;
+  padding:30px;
+  width:320px;
+  border-radius:20px;
+  box-shadow:0 20px 40px rgba(0,0,0,.4);
+  text-align:center;
+}
+input,button{
+  width:100%;
+  margin-top:10px;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid #ccc;
+}
+button{
+  border:none;
+  font-weight:bold;
+  cursor:pointer;
+}
+.green{background:#22c55e;color:white}
+.blue{background:#2563eb;color:white}
+.red{background:#ef4444;color:white}
 
 /* TOPO */
-#top-bar {
-  position: fixed;
-  top: 15px;
-  left: 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  z-index: 10;
+#top{
+  position:fixed;
+  top:15px;
+  left:15px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  z-index:10;
 }
-
-.top-btn {
-  width: 55px;
-  height: 55px;
-  border-radius: 50%;
-  border: none;
-  font-size: 28px;
-  background: white;
-  cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0,0,0,.3);
+.top-btn{
+  width:56px;height:56px;
+  border-radius:50%;
+  font-size:26px;
+  border:none;
+  background:white;
+  box-shadow:0 6px 12px rgba(0,0,0,.4);
 }
 
 /* TRILHA */
-#trail {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  padding-top: 120px;
-  overflow-y: auto;
+#trail{
+  position:absolute;
+  inset:0;
+  padding-top:120px;
+  overflow-y:auto;
 }
-
-/* MISSÃO */
-.mission {
-  width: 140px;
-  margin: 60px auto;
-  text-align: center;
-  cursor: pointer;
-  animation: pop 0.4s ease;
+.mission{
+  width:160px;
+  margin:70px auto;
+  text-align:center;
 }
-
-.mission:nth-child(even) {
-  margin-left: 55%;
+.mission:nth-child(even){margin-left:55%}
+.mission:nth-child(odd){margin-right:55%}
+.mission-box{
+  background:linear-gradient(180deg,#22c55e,#16a34a);
+  border-radius:30px;
+  padding:28px;
+  font-size:36px;
+  box-shadow:0 10px 18px rgba(0,0,0,.4);
 }
-
-.mission:nth-child(odd) {
-  margin-right: 55%;
-}
-
-.mission-icon {
-  width: 120px;
-  height: 120px;
-  background: #fff;
-  border-radius: 30px;
-  box-shadow: 0 6px 12px rgba(0,0,0,.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 48px;
-}
-
-.mission-name {
-  margin-top: 8px;
-  font-weight: bold;
-  color: white;
-  text-shadow: 1px 1px 2px #000;
+.mission-name{
+  color:white;
+  margin-top:10px;
+  font-weight:bold;
 }
 
 /* MODAL */
-#modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.6);
-  display: none;
-  align-items: center;
-  justify-content: center;
+#modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.65);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:20;
 }
-
-#modal-content {
-  background: white;
-  padding: 25px;
-  border-radius: 20px;
-  text-align: center;
-  width: 280px;
-}
-
-#modal button {
-  margin-top: 15px;
-  padding: 12px;
-  width: 100%;
-  border-radius: 12px;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-#complete-btn {
-  background: #4CAF50;
-  color: white;
+#modal-content{
+  background:white;
+  padding:25px;
+  width:300px;
+  border-radius:20px;
+  text-align:center;
 }
 
 /* LEVEL */
-#level-box {
-  position: fixed;
-  bottom: 15px;
-  right: 15px;
-  background: white;
-  padding: 10px 14px;
-  border-radius: 14px;
-  font-weight: bold;
-  box-shadow: 0 4px 8px rgba(0,0,0,.3);
-}
-
-@keyframes pop {
-  from { transform: scale(.6); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+#level{
+  position:fixed;
+  bottom:15px;
+  right:15px;
+  background:#fde047;
+  padding:10px 14px;
+  border-radius:16px;
+  font-weight:bold;
 }
 </style>
 </head>
 
 <body>
 
-<div id="top-bar">
-  <button class="top-btn" onclick="addMission()">+</button>
-</div>
-
-<div id="trail"></div>
-
-<div id="modal">
-  <div id="modal-content">
-    <h2 id="modal-title"></h2>
-    <p>+100 Pontos de Rotina</p>
-    <button id="complete-btn">Concluir</button>
+<!-- LOGIN -->
+<div id="login">
+  <div class="card">
+    <h2>Rotina Gameificada</h2>
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Senha">
+    <button class="green" onclick="register()">Criar conta</button>
+    <button class="blue" onclick="loginUser()">Entrar</button>
+    <p id="msg"></p>
   </div>
 </div>
 
-<div id="level-box"></div>
+<!-- TOPO -->
+<div id="top" style="display:none">
+  <button class="top-btn" onclick="openCreate()">➕</button>
+  <button class="top-btn" onclick="openHistory()">✔️</button>
+  <button class="top-btn" onclick="openRewards()">🎁</button>
+</div>
+
+<!-- TRILHA -->
+<div id="trail" style="display:none"></div>
+
+<!-- LEVEL -->
+<div id="level" style="display:none"></div>
+
+<!-- MODAL -->
+<div id="modal">
+  <div id="modal-content"></div>
+</div>
 
 <script>
-/* ===== DADOS ===== */
-let missions = JSON.parse(localStorage.getItem("missions")) || [
-  { id: 1, name: "Arrumar a cama", icon: "🛏️", done: false },
-  { id: 2, name: "Escovar os dentes", icon: "🦷", done: false },
-  { id: 3, name: "Fazer tarefa", icon: "📚", done: false }
-];
+// 🔥 FIREBASE CONFIG
+firebase.initializeApp({
+  apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
+  authDomain: "sua-rotina-em-um-site.firebaseapp.com",
+  databaseURL: "https://sua-rotina-em-um-site-default-rtdb.firebaseio.com",
+  projectId: "sua-rotina-em-um-site"
+});
 
-let points = Number(localStorage.getItem("points")) || 0;
-let selectedMission = null;
+const auth = firebase.auth();
+const db = firebase.database();
 
-/* ===== FUNÇÕES ===== */
-function save() {
-  localStorage.setItem("missions", JSON.stringify(missions));
-  localStorage.setItem("points", points);
-}
+let uid, user;
 
-function getLevel() {
-  return Math.floor(points / 1000) + 1;
-}
-
-function renderLevel() {
-  document.getElementById("level-box").innerText =
-    `Level ${getLevel()} • ${points} pts`;
-}
-
-function render() {
-  const trail = document.getElementById("trail");
-  trail.innerHTML = "";
-
-  missions
-    .filter(m => !m.done)
-    .forEach(m => {
-      const div = document.createElement("div");
-      div.className = "mission";
-      div.onclick = () => openMission(m.id);
-
-      div.innerHTML = `
-        <div class="mission-icon">${m.icon}</div>
-        <div class="mission-name">${m.name}</div>
-      `;
-
-      trail.appendChild(div);
-    });
-
-  renderLevel();
-}
-
-function openMission(id) {
-  selectedMission = missions.find(m => m.id === id);
-  document.getElementById("modal-title").innerText = selectedMission.name;
-  document.getElementById("modal").style.display = "flex";
-}
-
-document.getElementById("complete-btn").onclick = () => {
-  if (selectedMission.done) return;
-
-  selectedMission.done = true;
-  points += 100;
-
-  save();
-  closeModal();
-  render();
-};
-
-function closeModal() {
-  document.getElementById("modal").style.display = "none";
-}
-
-function addMission() {
-  const name = prompt("Nome da missão:");
-  if (!name) return;
-
-  missions.push({
-    id: Date.now(),
-    name,
-    icon: "⭐",
-    done: false
+// 🔐 AUTH
+auth.onAuthStateChanged(u=>{
+  if(!u) return;
+  uid=u.uid;
+  db.ref("users/"+uid).once("value").then(s=>{
+    if(!s.exists()){
+      user={points:0,level:1,missions:{},rewards:{}};
+      db.ref("users/"+uid).set(user);
+    }else user=s.val();
+    startApp();
   });
+});
 
-  save();
+// LOGIN
+function register(){
+  auth.createUserWithEmailAndPassword(
+    email.value,password.value
+  ).catch(e=>msg.innerText=e.message);
+}
+function loginUser(){
+  auth.signInWithEmailAndPassword(
+    email.value,password.value
+  ).catch(e=>msg.innerText=e.message);
+}
+
+// START
+function startApp(){
+  login.style.display="none";
+  top.style.display="flex";
+  trail.style.display="block";
+  level.style.display="block";
   render();
 }
 
-/* RESET DIÁRIO */
-function checkReset() {
-  const last = localStorage.getItem("lastReset");
-  const today = new Date().toDateString();
-
-  if (last !== today) {
-    missions.forEach(m => m.done = false);
-    localStorage.setItem("lastReset", today);
-    save();
+// RENDER
+function render(){
+  trail.innerHTML="";
+  level.innerText="⭐ Lv "+Math.floor(user.points/1000+1);
+  for(let id in user.missions){
+    let m=user.missions[id];
+    if(m.completedToday) continue;
+    let div=document.createElement("div");
+    div.className="mission";
+    div.innerHTML=`
+      <div class="mission-box" onclick="openMission('${id}')">🏆</div>
+      <div class="mission-name">${m.name}</div>
+    `;
+    trail.appendChild(div);
   }
 }
 
-/* INIT */
-checkReset();
-render();
-</script>
+// COMPLETE
+function openMission(id){
+  modal.style.display="flex";
+  modal-content.innerHTML=`
+    <h3>${user.missions[id].name}</h3>
+    <button class="green" onclick="complete('${id}')">Concluir</button>
+    <button onclick="closeModal()">Cancelar</button>
+  `;
+}
+function complete(id){
+  let m=user.missions[id];
+  let today=new Date().toISOString().slice(0,10);
+  if(m.last===today) return;
+  m.last=today;
+  m.completedToday=true;
+  m.count=(m.count||0)+1;
+  user.points+=m.points;
+  db.ref("users/"+uid).set(user);
+  closeModal();
+  render();
+}
 
+// CREATE
+function openCreate(){
+  modal.style.display="flex";
+  modal-content.innerHTML=`
+    <h3>Criar missão</h3>
+    <input id="mn" placeholder="Nome">
+    <input id="mp" type="number" placeholder="Pontos">
+    <button class="green" onclick="saveMission()">Salvar</button>
+    <button onclick="closeModal()">Cancelar</button>
+  `;
+}
+function saveMission(){
+  let id="m"+Date.now();
+  user.missions[id]={
+    name:mn.value,
+    points:+mp.value,
+    completedToday:false
+  };
+  db.ref("users/"+uid).set(user);
+  closeModal();
+  render();
+}
+
+// RESET DAILY
+setInterval(()=>{
+  let today=new Date().toISOString().slice(0,10);
+  for(let id in user.missions){
+    if(user.missions[id].last!==today)
+      user.missions[id].completedToday=false;
+  }
+  db.ref("users/"+uid).set(user);
+  render();
+},60000);
+
+function openHistory(){alert("Histórico em breve")}
+function openRewards(){alert("Recompensas em breve")}
+function closeModal(){modal.style.display="none"}
+</script>
 </body>
 </html>
