@@ -2,288 +2,122 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Rotina Gameificada</title>
+<title>Trilha da Rotina</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Firebase v8 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <style>
 *{box-sizing:border-box;font-family:'Trebuchet MS',Arial}
-body{
-  margin:0;
-  width:100vw;
-  height:100vh;
-  background:linear-gradient(180deg,#2563eb,#38bdf8);
-  overflow:hidden;
-}
-
-/* LOGIN */
-#login{
-  position:absolute;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.card{
-  background:white;
-  padding:30px;
-  width:320px;
-  border-radius:20px;
-  box-shadow:0 20px 40px rgba(0,0,0,.4);
-  text-align:center;
-}
-input,button{
-  width:100%;
-  margin-top:10px;
-  padding:12px;
-  border-radius:12px;
-  border:1px solid #ccc;
-}
-button{
-  border:none;
-  font-weight:bold;
-  cursor:pointer;
-}
-.green{background:#22c55e;color:white}
-.blue{background:#2563eb;color:white}
-.red{background:#ef4444;color:white}
-
-/* TOPO */
-#top{
-  position:fixed;
-  top:15px;
-  left:15px;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  z-index:10;
-}
-.top-btn{
-  width:56px;height:56px;
-  border-radius:50%;
-  font-size:26px;
-  border:none;
-  background:white;
-  box-shadow:0 6px 12px rgba(0,0,0,.4);
-}
-
-/* TRILHA */
-#trail{
-  position:absolute;
-  inset:0;
-  padding-top:120px;
-  overflow-y:auto;
-}
-.mission{
-  width:160px;
-  margin:70px auto;
-  text-align:center;
-}
+body{margin:0;height:100vh;background:linear-gradient(180deg,#2563eb,#38bdf8);overflow:hidden}
+.screen{display:none;height:100vh}
+.screen.active{display:block}
+.btn{padding:12px;border-radius:12px;border:none;font-size:16px;margin-top:8px;cursor:pointer}
+.btn-blue{background:#2563eb;color:#fff}
+.btn-red{background:#ef4444;color:#fff}
+#login{display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+#login input{width:260px;padding:12px;border-radius:12px;border:none;margin-top:8px}
+#trail{height:100%;overflow-y:auto;padding-top:120px}
+.mission{width:160px;margin:60px auto;text-align:center}
 .mission:nth-child(even){margin-left:55%}
 .mission:nth-child(odd){margin-right:55%}
-.mission-box{
-  background:linear-gradient(180deg,#22c55e,#16a34a);
-  border-radius:30px;
-  padding:28px;
-  font-size:36px;
-  box-shadow:0 10px 18px rgba(0,0,0,.4);
-}
-.mission-name{
-  color:white;
-  margin-top:10px;
-  font-weight:bold;
-}
-
-/* MODAL */
-#modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.65);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:20;
-}
-#modal-content{
-  background:white;
-  padding:25px;
-  width:300px;
-  border-radius:20px;
-  text-align:center;
-}
-
-/* LEVEL */
-#level{
-  position:fixed;
-  bottom:15px;
-  right:15px;
-  background:#fde047;
-  padding:10px 14px;
-  border-radius:16px;
-  font-weight:bold;
-}
+.mission-box{background:#22c55e;color:#fff;padding:24px;border-radius:24px;font-size:32px;cursor:pointer}
+#top{position:fixed;top:10px;left:10px;display:flex;flex-direction:column;gap:10px}
+.top-btn{width:54px;height:54px;border-radius:50%;border:none;font-size:26px;cursor:pointer}
+#level{position:fixed;bottom:15px;right:15px;background:#fde047;padding:10px 14px;border-radius:16px;font-weight:bold}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center}
+.modal-content{background:#fff;padding:20px;border-radius:20px;width:300px;text-align:center}
 </style>
 </head>
-
 <body>
 
-<!-- LOGIN -->
-<div id="login">
-  <div class="card">
-    <h2>Rotina Gameificada</h2>
-    <input id="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Senha">
-    <button class="green" onclick="register()">Criar conta</button>
-    <button class="blue" onclick="loginUser()">Entrar</button>
-    <p id="msg"></p>
-  </div>
+<div id="login" class="screen active">
+<h1>🌟 Trilha da Rotina</h1>
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Senha">
+<button class="btn btn-blue" onclick="login()">Entrar</button>
+<button class="btn" onclick="register()">Criar conta</button>
+<p id="msg"></p>
 </div>
 
-<!-- TOPO -->
-<div id="top" style="display:none">
-  <button class="top-btn" onclick="openCreate()">➕</button>
-  <button class="top-btn" onclick="openHistory()">✔️</button>
-  <button class="top-btn" onclick="openRewards()">🎁</button>
+<div id="dashboard" class="screen">
+<div id="top">
+<button class="top-btn" onclick="openCreate()">➕</button>
+<button class="top-btn" onclick="openStore()">🎁</button>
+<button class="top-btn" onclick="openProgress()">📊</button>
+<button class="top-btn" onclick="logout()">🚪</button>
+</div>
+<div id="trail"></div>
+<div id="level">Nível 1<br><span id="points">0</span> pts</div>
 </div>
 
-<!-- TRILHA -->
-<div id="trail" style="display:none"></div>
+<div id="createModal" class="modal">
+<div class="modal-content">
+<h3>Nova Missão Diária</h3>
+<input id="mName" placeholder="Nome">
+<input id="mPoints" type="number" placeholder="Pontos">
+<button class="btn btn-blue" onclick="saveMission()">Salvar</button>
+<button class="btn btn-red" onclick="closeModals()">Cancelar</button>
+</div>
+</div>
 
-<!-- LEVEL -->
-<div id="level" style="display:none"></div>
+<div id="storeModal" class="modal">
+<div class="modal-content">
+<h3>🎁 Loja de Recompensas</h3>
+<input id="rName" placeholder="Recompensa">
+<input id="rCost" type="number" placeholder="Custo em pontos">
+<button class="btn btn-blue" onclick="saveReward()">Adicionar</button>
+<div id="rewardList"></div>
+<button class="btn btn-red" onclick="closeModals()">Voltar</button>
+</div>
+</div>
 
-<!-- MODAL -->
-<div id="modal">
-  <div id="modal-content"></div>
+<div id="progressModal" class="modal">
+<div class="modal-content">
+<h3>📊 Progresso Semanal</h3>
+<div id="progressList"></div>
+<button class="btn btn-red" onclick="closeModals()">Voltar</button>
+</div>
 </div>
 
 <script>
-// 🔥 FIREBASE CONFIG
-firebase.initializeApp({
-  apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
-  authDomain: "sua-rotina-em-um-site.firebaseapp.com",
-  databaseURL: "https://sua-rotina-em-um-site-default-rtdb.firebaseio.com",
-  projectId: "sua-rotina-em-um-site"
-});
+const firebaseConfig={apiKey:"AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",authDomain:"sua-rotina-em-um-site.firebaseapp.com",databaseURL:"https://sua-rotina-em-um-site-default-rtdb.firebaseio.com",projectId:"sua-rotina-em-um-site",storageBucket:"sua-rotina-em-um-site.appspot.com",messagingSenderId:"774359583618",appId:"1:774359583618:web:3ccf1600d1ab1dc6eadd9b"};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.database();
+let uid=null,missions={},points=0;
 
-const auth = firebase.auth();
-const db = firebase.database();
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function register(){auth.createUserWithEmailAndPassword(email.value,password.value).catch(e=>msg.innerText=e.message)}
+function login(){auth.signInWithEmailAndPassword(email.value,password.value).catch(e=>msg.innerText=e.message)}
+auth.onAuthStateChanged(u=>{if(!u)return;uid=u.uid;show('dashboard');loadAll()})
+function logout(){auth.signOut();show('login')}
 
-let uid, user;
+function openCreate(){createModal.style.display='flex'}
+function openStore(){storeModal.style.display='flex';loadRewards()}
+function openProgress(){progressModal.style.display='flex';loadProgress()}
+function closeModals(){document.querySelectorAll('.modal').forEach(m=>m.style.display='none')}
 
-// 🔐 AUTH
-auth.onAuthStateChanged(u=>{
-  if(!u) return;
-  uid=u.uid;
-  db.ref("users/"+uid).once("value").then(s=>{
-    if(!s.exists()){
-      user={points:0,level:1,missions:{},rewards:{}};
-      db.ref("users/"+uid).set(user);
-    }else user=s.val();
-    startApp();
-  });
-});
+function saveMission(){const n=mName.value.trim();const p=parseInt(mPoints.value);if(!n||isNaN(p))return;db.ref(`users/${uid}/missions`).push({name:n,points:p,done:false,date:new Date().toDateString()});closeModals();mName.value='';mPoints.value=''}
 
-// LOGIN
-function register(){
-  auth.createUserWithEmailAndPassword(
-    email.value,password.value
-  ).catch(e=>msg.innerText=e.message);
-}
-function loginUser(){
-  auth.signInWithEmailAndPassword(
-    email.value,password.value
-  ).catch(e=>msg.innerText=e.message);
-}
+function loadAll(){db.ref(`users/${uid}`).on('value',s=>{const d=s.val()||{};missions=d.missions||{};points=d.points||0;updateUI()})}
 
-// START
-function startApp(){
-  login.style.display="none";
-  top.style.display="flex";
-  trail.style.display="block";
-  level.style.display="block";
-  render();
-}
+function updateUI(){pointsEl.innerText=points;renderTrail()}
+const pointsEl=document.getElementById('points')
 
-// RENDER
-function render(){
-  trail.innerHTML="";
-  level.innerText="⭐ Lv "+Math.floor(user.points/1000+1);
-  for(let id in user.missions){
-    let m=user.missions[id];
-    if(m.completedToday) continue;
-    let div=document.createElement("div");
-    div.className="mission";
-    div.innerHTML=`
-      <div class="mission-box" onclick="openMission('${id}')">🏆</div>
-      <div class="mission-name">${m.name}</div>
-    `;
-    trail.appendChild(div);
-  }
-}
+function renderTrail(){trail.innerHTML='';Object.keys(missions).forEach(k=>{const m=missions[k];if(m.done)return;const div=document.createElement('div');div.className='mission';div.innerHTML=`<div class='mission-box'>⭐</div><div>${m.name}</div>`;div.onclick=()=>finishMission(k);trail.appendChild(div)})}
 
-// COMPLETE
-function openMission(id){
-  modal.style.display="flex";
-  modal-content.innerHTML=`
-    <h3>${user.missions[id].name}</h3>
-    <button class="green" onclick="complete('${id}')">Concluir</button>
-    <button onclick="closeModal()">Cancelar</button>
-  `;
-}
-function complete(id){
-  let m=user.missions[id];
-  let today=new Date().toISOString().slice(0,10);
-  if(m.last===today) return;
-  m.last=today;
-  m.completedToday=true;
-  m.count=(m.count||0)+1;
-  user.points+=m.points;
-  db.ref("users/"+uid).set(user);
-  closeModal();
-  render();
-}
+function finishMission(k){const m=missions[k];db.ref(`users/${uid}/points`).set(points+m.points);db.ref(`users/${uid}/missions/${k}/done`).set(true)}
 
-// CREATE
-function openCreate(){
-  modal.style.display="flex";
-  modal-content.innerHTML=`
-    <h3>Criar missão</h3>
-    <input id="mn" placeholder="Nome">
-    <input id="mp" type="number" placeholder="Pontos">
-    <button class="green" onclick="saveMission()">Salvar</button>
-    <button onclick="closeModal()">Cancelar</button>
-  `;
-}
-function saveMission(){
-  let id="m"+Date.now();
-  user.missions[id]={
-    name:mn.value,
-    points:+mp.value,
-    completedToday:false
-  };
-  db.ref("users/"+uid).set(user);
-  closeModal();
-  render();
-}
+function saveReward(){const n=rName.value.trim();const c=parseInt(rCost.value);if(!n||isNaN(c))return;db.ref(`users/${uid}/rewards`).push({name:n,cost:c});rName.value='';rCost.value='';loadRewards()}
 
-// RESET DAILY
-setInterval(()=>{
-  let today=new Date().toISOString().slice(0,10);
-  for(let id in user.missions){
-    if(user.missions[id].last!==today)
-      user.missions[id].completedToday=false;
-  }
-  db.ref("users/"+uid).set(user);
-  render();
-},60000);
+function loadRewards(){rewardList.innerHTML='';db.ref(`users/${uid}/rewards`).once('value',s=>{const r=s.val()||{};Object.keys(r).forEach(k=>{const item=document.createElement('div');item.innerHTML=`${r[k].name} - ${r[k].cost} pts <button onclick="buyReward('${k}',${r[k].cost})">Trocar</button>`;rewardList.appendChild(item)})})}
 
-function openHistory(){alert("Histórico em breve")}
-function openRewards(){alert("Recompensas em breve")}
-function closeModal(){modal.style.display="none"}
+function buyReward(k,c){if(points<c)return alert('Pontos insuficientes');db.ref(`users/${uid}/points`).set(points-c)}
+
+function loadProgress(){progressList.innerHTML='';db.ref(`users/${uid}/missions`).once('value',s=>{const m=s.val()||{};Object.values(m).forEach(v=>{if(v.done){const d=document.createElement('div');d.innerText=`${v.name} ✔ ${v.date}`;progressList.appendChild(d)}})})}
 </script>
 </body>
 </html>
