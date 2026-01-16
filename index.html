@@ -5,182 +5,118 @@
 <title>Trilha da Rotina</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- ================= FIREBASE V8 ================= -->
+<!-- Firebase v8 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-<!-- ================= ESTILO ================= -->
 <style>
-/* RESET */
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:'Trebuchet MS', Arial, sans-serif;
-}
-
-/* BODY */
+/* ================= RESET ================= */
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Trebuchet MS',Arial}
 body{
-  width:100vw;
-  height:100vh;
+  width:100vw;height:100vh;
   background:linear-gradient(180deg,#2563eb,#38bdf8);
-  overflow:hidden;
+  overflow:hidden;color:white;
 }
 
-/* TELAS */
-.screen{
-  display:none;
-  width:100%;
-  height:100%;
-}
-.screen.active{
-  display:flex;
+/* ================= TELAS ================= */
+.screen{display:none;width:100%;height:100%}
+.screen.active{display:flex}
+
+/* ================= LOGIN ================= */
+#login{
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  animation:fadeIn .4s ease;
+  gap:14px;
+}
+#login input{
+  width:260px;padding:12px;
+  border-radius:12px;border:none;
+}
+#login button{
+  width:260px;padding:12px;
+  border:none;border-radius:14px;
+  background:#22c55e;color:white;
+  font-size:16px;cursor:pointer;
 }
 
-/* ANIMAÇÕES */
-@keyframes fadeIn{
-  from{opacity:0;transform:scale(.97)}
-  to{opacity:1;transform:scale(1)}
+/* ================= DASHBOARD ================= */
+#dashboard{flex-direction:column}
+
+/* TOP BAR */
+#topBar{
+  position:fixed;top:12px;left:12px;
+  display:flex;flex-direction:column;
+  gap:12px;z-index:20;
 }
+.topBtn{
+  width:56px;height:56px;
+  border-radius:50%;border:none;
+  font-size:26px;
+  background:white;cursor:pointer;
+}
+
+/* ================= MAPA ================= */
+#map{
+  flex:1;overflow-y:auto;
+  padding-top:120px;
+}
+.node{
+  width:150px;margin:70px auto;
+  text-align:center;
+  animation:float 3s infinite ease-in-out;
+}
+.node:nth-child(even){margin-left:55%}
+.node:nth-child(odd){margin-right:55%}
+
+.nodeBox{
+  background:linear-gradient(180deg,#22c55e,#16a34a);
+  padding:26px;border-radius:26px;
+  font-size:32px;cursor:pointer;
+  box-shadow:0 10px 20px rgba(0,0,0,.4);
+}
+.nodeName{margin-top:8px;font-weight:bold}
+
 @keyframes float{
   0%,100%{transform:translateY(0)}
   50%{transform:translateY(-8px)}
 }
 
-/* LOGIN */
-#login h1{
-  color:white;
-  margin-bottom:20px;
-}
-#login input{
-  width:260px;
-  padding:12px;
-  margin:6px;
-  border:none;
-  border-radius:14px;
-}
-#login button{
-  width:260px;
-  padding:12px;
-  margin:6px;
-  border:none;
-  border-radius:14px;
-  background:#22c55e;
-  color:white;
-  font-size:16px;
-  cursor:pointer;
-}
-#msg{
-  margin-top:10px;
-  color:white;
-}
-
-/* DASHBOARD */
-#dashboard{
-  position:relative;
-  padding-top:100px;
-}
-
-/* BARRA SUPERIOR */
-#topBar{
-  position:fixed;
-  top:15px;
-  left:15px;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  z-index:20;
-}
-.topBtn{
-  width:56px;
-  height:56px;
-  border-radius:50%;
-  border:none;
-  background:white;
-  font-size:26px;
-  cursor:pointer;
-  box-shadow:0 6px 12px rgba(0,0,0,.35);
-}
-
-/* TRILHA */
-#trail{
-  width:100%;
-  height:100%;
-  overflow-y:auto;
-  padding-bottom:200px;
-}
-.mission{
-  width:170px;
-  margin:80px auto;
-  text-align:center;
-  animation:float 3s infinite ease-in-out;
-}
-.mission:nth-child(even){margin-left:55%}
-.mission:nth-child(odd){margin-right:55%}
-.missionBox{
-  background:linear-gradient(180deg,#22c55e,#16a34a);
-  color:white;
-  padding:24px;
-  border-radius:28px;
-  font-size:18px;
-  cursor:pointer;
-  box-shadow:0 10px 18px rgba(0,0,0,.35);
-}
-
-/* PERSONAGEM */
-#player{
-  position:fixed;
-  bottom:120px;
-  left:50%;
-  transform:translateX(-50%);
-  font-size:42px;
-  transition:.4s;
-}
-
-/* LEVEL */
-#levelBox{
-  position:fixed;
-  bottom:16px;
-  right:16px;
-  background:#fde047;
-  padding:10px 16px;
-  border-radius:16px;
-  font-weight:bold;
-}
-
-/* MODAL */
+/* ================= MODAIS ================= */
 .modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.65);
-  display:none;
-  align-items:center;
-  justify-content:center;
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.6);
+  display:none;align-items:center;justify-content:center;
   z-index:30;
 }
-.modalBox{
-  background:white;
-  padding:22px;
+.modalContent{
+  background:white;color:black;
+  width:320px;padding:20px;
   border-radius:18px;
-  width:300px;
 }
-.modalBox h3{
-  margin-bottom:10px;
+.modalContent input, .modalContent button{
+  width:100%;padding:10px;margin-top:10px;
 }
-.modalBox input,
-.modalBox button{
-  width:100%;
-  padding:10px;
-  margin-top:8px;
+
+/* ================= PLANILHA ================= */
+.table{
+  width:100%;border-collapse:collapse;
+}
+.table th,.table td{
+  border:1px solid #ccc;
+  padding:8px;text-align:center;
+}
+
+/* ================= LEVEL ================= */
+#levelBox{
+  position:fixed;bottom:14px;right:14px;
+  background:gold;color:black;
+  padding:10px 16px;border-radius:14px;
+  font-weight:bold;
 }
 </style>
 </head>
-
 <body>
 
 <!-- ================= LOGIN ================= -->
@@ -195,136 +131,143 @@ body{
 
 <!-- ================= DASHBOARD ================= -->
 <div id="dashboard" class="screen">
+
   <div id="topBar">
-    <button class="topBtn" onclick="openCreate()">➕</button>
-    <button class="topBtn" onclick="openStore()">🏆</button>
+    <button class="topBtn" onclick="openMissionSheet()">➕</button>
+    <button class="topBtn" onclick="openRewards()">🏪</button>
+    <button class="topBtn" onclick="openProgress()">📊</button>
     <button class="topBtn" onclick="logout()">🚪</button>
   </div>
 
-  <div id="trail"></div>
-  <div id="player">🧒</div>
-  <div id="levelBox">Nível 1</div>
+  <div id="map"></div>
 </div>
 
-<!-- ================= MODAL MISSÃO ================= -->
-<div id="createModal" class="modal">
-  <div class="modalBox">
+<div id="levelBox">Nível 1</div>
+
+<!-- ================= MODAIS ================= -->
+<div id="missionModal" class="modal">
+  <div class="modalContent">
     <h3>Nova Missão</h3>
-    <input id="mName" placeholder="Nome da missão">
+    <input id="mName" placeholder="Nome">
     <input id="mPoints" type="number" placeholder="Pontos de Rotina">
+    <input id="mHour" type="time">
     <button onclick="saveMission()">Salvar</button>
+    <button onclick="closeModals()">Fechar</button>
+  </div>
+</div>
+
+<div id="finishModal" class="modal">
+  <div class="modalContent">
+    <h3 id="finishTitle"></h3>
+    <button onclick="finishMission()">Concluir</button>
     <button onclick="closeModals()">Cancelar</button>
   </div>
 </div>
 
-<!-- ================= SCRIPT ================= -->
+<!-- ================= FIREBASE ================= -->
 <script>
-/* ================= FIREBASE ================= */
-firebase.initializeApp({
-  apiKey:"AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
-  authDomain:"sua-rotina-em-um-site.firebaseapp.com",
-  databaseURL:"https://sua-rotina-em-um-site-default-rtdb.firebaseio.com",
-  projectId:"sua-rotina-em-um-site"
-});
+const firebaseConfig = {
+  apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
+  authDomain: "sua-rotina-em-um-site.firebaseapp.com",
+  databaseURL: "https://sua-rotina-em-um-site-default-rtdb.firebaseio.com",
+  projectId: "sua-rotina-em-um-site",
+  storageBucket: "sua-rotina-em-um-site.appspot.com",
+  messagingSenderId: "774359583618",
+  appId: "1:774359583618:web:3ccf1600d1ab1dc6eadd9b"
+};
+firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth();
 const db=firebase.database();
 
-/* ================= ESTADO GLOBAL ================= */
 let uid=null;
 let missions={};
-let pontos=0;
-
-/* ================= UTIL ================= */
-function today(){
-  return new Date().toISOString().slice(0,10);
-}
-function show(id){
-  document.querySelectorAll('.screen')
-    .forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
+let selected=null;
+let points=0;
 
 /* ================= AUTH ================= */
 function register(){
   auth.createUserWithEmailAndPassword(email.value,password.value)
-  .then(()=>msg.innerText="Conta criada com sucesso")
-  .catch(e=>msg.innerText=e.message);
+    .then(()=>msg.innerText="Conta criada")
+    .catch(e=>msg.innerText=e.message)
 }
 function login(){
   auth.signInWithEmailAndPassword(email.value,password.value)
-  .then(()=>msg.innerText="Login realizado")
-  .catch(e=>msg.innerText=e.message);
+    .then(()=>msg.innerText="Login realizado")
+    .catch(e=>msg.innerText=e.message)
 }
 auth.onAuthStateChanged(user=>{
   if(!user)return;
   uid=user.uid;
-  show('dashboard');
-  loadUserData();
+  document.getElementById('login').classList.remove('active');
+  document.getElementById('dashboard').classList.add('active');
+  loadMissions();
+  loadPoints();
 });
-function logout(){
-  auth.signOut();
-  show('login');
-}
+function logout(){auth.signOut();location.reload()}
 
 /* ================= MISSÕES ================= */
-function openCreate(){
-  createModal.style.display='flex';
-}
-function closeModals(){
-  createModal.style.display='none';
+function openMissionSheet(){
+  document.getElementById('missionModal').style.display='flex';
 }
 function saveMission(){
-  const name=mName.value.trim();
+  const name=mName.value;
   const pts=parseInt(mPoints.value);
-  if(!name||!pts)return;
-
-  const key=db.ref().child('x').push().key;
-  db.ref('users/'+uid+'/missions/'+key).set({
-    name:name,
-    pts:pts,
-    lastDone:""
+  const hour=mHour.value;
+  if(!name||!pts||!hour)return;
+  db.ref(`users/${uid}/missions`).push({
+    name,pts,hour,done:false,lastDone:""
   });
-
-  mName.value="";
-  mPoints.value="";
   closeModals();
 }
+function loadMissions(){
+  db.ref(`users/${uid}/missions`).on('value',s=>{
+    missions=s.val()||{};
+    renderMap();
+  });
+}
+function renderMap(){
+  map.innerHTML="";
+  Object.keys(missions).forEach(k=>{
+    const m=missions[k];
+    if(m.done && m.lastDone===today())return;
+    const div=document.createElement('div');
+    div.className="node";
+    div.innerHTML=`<div class="nodeBox">⭐</div><div class="nodeName">${m.name}</div>`;
+    div.onclick=()=>openFinish(k);
+    map.appendChild(div);
+  });
+}
+function openFinish(k){
+  selected=k;
+  finishTitle.innerText=missions[k].name;
+  finishModal.style.display='flex';
+}
+function finishMission(){
+  const m=missions[selected];
+  if(m.lastDone===today())return;
+  points+=m.pts;
+  db.ref(`users/${uid}/points`).set(points);
+  db.ref(`users/${uid}/missions/${selected}`).update({
+    lastDone:today()
+  });
+  closeModals();
+}
+function today(){
+  return new Date().toISOString().split('T')[0];
+}
 
-/* ================= DADOS ================= */
-function loadUserData(){
-  db.ref('users/'+uid).on('value',snap=>{
-    const d=snap.val()||{};
-    missions=d.missions||{};
-    pontos=d.pontos||0;
-    renderTrail();
+/* ================= PONTOS ================= */
+function loadPoints(){
+  db.ref(`users/${uid}/points`).on('value',s=>{
+    points=s.val()||0;
+    const lvl=Math.floor(points/1000)+1;
+    levelBox.innerText="Nível "+lvl;
   });
 }
 
-/* ================= RENDER ================= */
-function renderTrail(){
-  trail.innerHTML="";
-  let index=0;
-
-  Object.keys(missions).forEach(id=>{
-    const m=missions[id];
-    if(m.lastDone===today())return;
-
-    const div=document.createElement('div');
-    div.className='mission';
-    div.innerHTML=`<div class="missionBox">${m.name}</div>`;
-    div.onclick=()=>{
-      m.lastDone=today();
-      pontos+=m.pts;
-      db.ref('users/'+uid).update({pontos});
-      db.ref('users/'+uid+'/missions/'+id)
-        .update({lastDone:m.lastDone});
-    };
-    trail.appendChild(div);
-    index++;
-  });
-
-  player.style.top=(200+index*120)+"px";
-  levelBox.innerText="Nível "+(Math.floor(pontos/1000)+1);
+/* ================= UTILS ================= */
+function closeModals(){
+  document.querySelectorAll('.modal').forEach(m=>m.style.display='none');
 }
 </script>
 
