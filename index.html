@@ -2,11 +2,12 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-
-<!-- RESPONSIVO -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Minha Rotina</title>
+<title>Minhas Tarefas</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -21,7 +22,6 @@ body {
   margin: 0;
 }
 
-/* CONTAINER */
 .container {
   max-width: 600px;
   margin: auto;
@@ -29,7 +29,6 @@ body {
   text-align: center;
 }
 
-/* INPUT E BOTÕES */
 input {
   width: 100%;
   padding: 12px;
@@ -49,13 +48,11 @@ button {
   cursor: pointer;
 }
 
-/* LISTA */
 #lista {
   margin-top: 15px;
   padding: 0;
 }
 
-/* ITEM */
 li {
   list-style: none;
   background: #FFF8DC;
@@ -68,14 +65,12 @@ li {
   box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
-/* TEXTO */
 span {
   flex: 1;
   text-align: left;
   word-break: break-word;
 }
 
-/* BOTÕES DO ITEM */
 .item-botoes button {
   width: auto;
   margin-left: 5px;
@@ -193,18 +188,12 @@ function carregar() {
         let span = document.createElement("span");
         span.textContent = t.texto;
 
-        if (t.tipo === "diaria") {
-          span.textContent += " 🔁";
-        }
-
-        if (t.feito) {
-          span.style.opacity = "0.5";
-        }
+        if (t.tipo === "diaria") span.textContent += " 🔁";
+        if (t.feito) span.style.opacity = "0.5";
 
         let botoes = document.createElement("div");
         botoes.className = "item-botoes";
 
-        // concluir
         let btnCheck = document.createElement("button");
         btnCheck.textContent = "✔️";
         btnCheck.onclick = () => {
@@ -213,7 +202,6 @@ function carregar() {
           });
         };
 
-        // deletar
         let btnDelete = document.createElement("button");
         btnDelete.textContent = "🗑️";
         btnDelete.onclick = () => {
@@ -229,6 +217,11 @@ function carregar() {
         lista.appendChild(li);
       });
     });
+}
+
+// SERVICE WORKER
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js");
 }
 </script>
 
