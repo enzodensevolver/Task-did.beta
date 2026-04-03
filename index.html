@@ -97,13 +97,15 @@ auth.onAuthStateChanged(u => {
 });
 
 // ADICIONAR
-function adicionar() {
-  let texto = tarefa.value;
+function adicionar(tipo = "normal") {
+  let texto = document.getElementById("tarefa").value;
 
   db.collection("tarefas").add({
     uid: user.uid,
     texto: texto,
-    feito: false
+    tipo: tipo, // 🔥 novo campo
+    feito: false,
+    data: new Date().toISOString().split("T")[0] // salva o dia
   });
 
   tarefa.value = "";
