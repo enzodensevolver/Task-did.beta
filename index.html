@@ -11,10 +11,12 @@
 
 <style>
 body {
-  background: #121212;
-  color: white;
+  background: #E6D3A3; /* bege mais escuro */
+  color: #000;
   text-align: center;
   font-family: Arial;
+  margin: 0;
+  height: 100vh;
 }
 
 input, button {
@@ -22,6 +24,10 @@ input, button {
   margin: 5px;
   border-radius: 8px;
   border: none;
+}
+
+button {
+  cursor: pointer;
 }
 
 li {
@@ -46,13 +52,13 @@ li {
   <button onclick="adicionar()">➕ Normal</button>
   <button onclick="adicionar('diaria')">🔁 Diária</button>
 
- <ul id="lista" style="
-  background:#F5F5DC;
-  padding:20px;
-  border-radius:15px;
-  width:300px;
-  margin:20px auto;
-"></ul>
+  <ul id="lista" style="
+    width: 90%;
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    border-radius: 15px;
+  "></ul>
 
   <button onclick="logout()">Sair</button>
 </div>
@@ -134,18 +140,23 @@ function carregar() {
       snapshot.forEach(doc => {
         let t = doc.data();
 
-        // filtrar tarefas antigas normais
+        // remover tarefas antigas normais
         if (t.tipo === "normal" && t.data !== hoje) return;
 
         let li = document.createElement("li");
-        li.style.boxShadow = "0 2px 5px rgba(0,0,0,0.2)";
-        li.style.color = "#000";
+
+        li.style.background = "#FFF8DC"; // bege claro
         li.style.margin = "10px";
-        li.style.padding = "10px";
-        li.style.borderRadius = "10px";
+        li.style.padding = "12px";
+        li.style.borderRadius = "12px";
         li.style.display = "flex";
         li.style.justifyContent = "space-between";
         li.style.alignItems = "center";
+        li.style.boxShadow = "0 4px 10px rgba(0,0,0,0.2)";
+        li.style.transition = "0.2s";
+
+        li.onmouseover = () => li.style.transform = "scale(1.02)";
+        li.onmouseout = () => li.style.transform = "scale(1)";
 
         let span = document.createElement("span");
         span.textContent = t.texto;
@@ -158,7 +169,6 @@ function carregar() {
           span.style.opacity = "0.5";
         }
 
-        // BOTÕES
         let container = document.createElement("div");
 
         // ✅ concluir
