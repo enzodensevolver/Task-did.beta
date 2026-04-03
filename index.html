@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Minha Rotina</title>
 
-<!-- Firebase versão simples -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
@@ -16,18 +16,23 @@ body {
   text-align: center;
   font-family: Arial;
 }
+
 input, button {
   padding: 10px;
   margin: 5px;
   border-radius: 8px;
   border: none;
 }
+
+li {
+  list-style: none;
+}
 </style>
 </head>
 
 <body>
 
-<h1>tarefas</h1>
+<h1>🔥 Minhas Tarefas</h1>
 
 <div id="login">
   <input id="email" placeholder="Email">
@@ -36,9 +41,13 @@ input, button {
 </div>
 
 <div id="app" style="display:none;">
-  <input id="tarefa">
-  <button onclick="adicionar()">Adicionar</button>
+  <input id="tarefa" placeholder="Nova tarefa">
+  <br>
+  <button onclick="adicionar()">➕ Normal</button>
+  <button onclick="adicionar('diaria')">🔁 Diária</button>
+
   <ul id="lista"></ul>
+
   <button onclick="logout()">Sair</button>
 </div>
 
@@ -46,7 +55,6 @@ input, button {
 const firebaseConfig = {
   apiKey: "AIzaSyBWrUi9DNZ5jmcXUmjSuKBTLiJGCyau_Pk",
   authDomain: "sua-rotina-em-um-site.firebaseapp.com",
-  databaseURL: "https://sua-rotina-em-um-site-default-rtdb.firebaseio.com",
   projectId: "sua-rotina-em-um-site",
   storageBucket: "sua-rotina-em-um-site.firebasestorage.app",
   messagingSenderId: "774359583618",
@@ -66,14 +74,8 @@ function login() {
   let senha = document.getElementById("senha").value;
 
   auth.signInWithEmailAndPassword(email, senha)
-    .catch(error => {
-      console.log("Erro login:", error.message);
-
-      auth.createUserWithEmailAndPassword(email, senha)
-        .catch(error => {
-          console.log("Erro criar conta:", error.message);
-          alert(error.message);
-        });
+    .catch(() => {
+      auth.createUserWithEmailAndPassword(email, senha);
     });
 }
 
@@ -88,27 +90,29 @@ auth.onAuthStateChanged(u => {
     user = u;
     document.getElementById("login").style.display = "none";
     document.getElementById("app").style.display = "block";
-    
     carregar();
   } else {
-    login.style.display = "block";
-    app.style.display = "none";
+    document.getElementById("login").style.display = "block";
+    document.getElementById("app").style.display = "none";
   }
 });
 
 // ADICIONAR
 function adicionar(tipo = "normal") {
-  let texto = document.getElementById("tarefa").value;
+  let input = document.getElementById("tarefa");
+  let texto = input.value;
+
+  if (texto === "") return;
 
   db.collection("tarefas").add({
     uid: user.uid,
     texto: texto,
-    tipo: tipo, // 🔥 novo campo
+    tipo: tipo,
     feito: false,
-    data: new Date().toISOString().split("T")[0] // salva o dia
+    data: new Date().toISOString().split("T")[0]
   });
 
-  tarefa.value = "";
+  input.value = "";
 }
 
 // CARREGAR
@@ -118,14 +122,13 @@ function carregar() {
     .onSnapshot(snapshot => {
 
       let hoje = new Date().toISOString().split("T")[0];
-
       let lista = document.getElementById("lista");
       lista.innerHTML = "";
 
       snapshot.forEach(doc => {
         let t = doc.data();
 
-        // 🔥 FILTRO INTELIGENTE
+        // filtrar tarefas antigas normais
         if (t.tipo === "normal" && t.data !== hoje) return;
 
         let li = document.createElement("li");
@@ -141,50 +144,43 @@ function carregar() {
         let span = document.createElement("span");
         span.textContent = t.texto;
 
-        // 🔵 se for diária
         if (t.tipo === "diaria") {
           span.textContent += " 🔁";
         }
 
-        let botao = document.createElement("button");
-        botao.textContent = "🗑️";
+        if (t.feito) {
+          span.style.opacity = "0.5";
+        }
 
-        botao.onclick = () => {
+        // BOTÕES
+        let container = document.createElement("div");
+
+        // ✅ concluir
+        let btnCheck = document.createElement("button");
+        btnCheck.textContent = "✔️";
+        btnCheck.onclick = () => {
+          db.collection("tarefas").doc(doc.id).update({
+            feito: !t.feito
+          });
+        };
+
+        // 🗑️ deletar
+        let btnDelete = document.createElement("button");
+        btnDelete.textContent = "🗑️";
+        btnDelete.onclick = () => {
           db.collection("tarefas").doc(doc.id).delete();
         };
 
+        container.appendChild(btnCheck);
+        container.appendChild(btnDelete);
+
         li.appendChild(span);
-        li.appendChild(botao);
+        li.appendChild(container);
 
         lista.appendChild(li);
       });
     });
 }
-        // TEXTO
-        let span = document.createElement("span");
-        span.textContent = t.texto;
-
-        // BOTÃO DELETAR 🗑️
-        let botao = document.createElement("button");
-        botao.textContent = "🗑️";
-        botao.style.background = "red";
-        botao.style.color = "white";
-        botao.style.border = "none";
-        botao.style.borderRadius = "8px";
-        botao.style.cursor = "pointer";
-
-        botao.onclick = () => {
-          db.collection("tarefas").doc(doc.id).delete();
-        };
-
-        li.appendChild(span);
-        li.appendChild(botao);
-
-        lista.appendChild(li);
-      });
-    });
-}
-<button onclick="adicionar('diaria')">➕ Tarefa diária</button>
 </script>
 
 </body>
