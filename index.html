@@ -115,23 +115,41 @@ function carregar() {
     .where("uid", "==", user.uid)
     .onSnapshot(snapshot => {
 
+      let lista = document.getElementById("lista");
       lista.innerHTML = "";
 
       snapshot.forEach(doc => {
         let t = doc.data();
 
         let li = document.createElement("li");
-        li.textContent = t.texto;
+        li.style.background = "#F5F5DC";
+        li.style.color = "#000";
+        li.style.margin = "10px";
+        li.style.padding = "10px";
+        li.style.borderRadius = "10px";
+        li.style.display = "flex";
+        li.style.justifyContent = "space-between";
+        li.style.alignItems = "center";
 
-        if (t.feito) {
-          li.style.textDecoration = "line-through";
-        }
+        // TEXTO
+        let span = document.createElement("span");
+        span.textContent = t.texto;
 
-        li.onclick = () => {
-          db.collection("tarefas").doc(doc.id).update({
-            feito: !t.feito
-          });
+        // BOTÃO DELETAR 🗑️
+        let botao = document.createElement("button");
+        botao.textContent = "🗑️";
+        botao.style.background = "red";
+        botao.style.color = "white";
+        botao.style.border = "none";
+        botao.style.borderRadius = "8px";
+        botao.style.cursor = "pointer";
+
+        botao.onclick = () => {
+          db.collection("tarefas").doc(doc.id).delete();
         };
+
+        li.appendChild(span);
+        li.appendChild(botao);
 
         lista.appendChild(li);
       });
