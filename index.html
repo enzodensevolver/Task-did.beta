@@ -117,11 +117,16 @@ function carregar() {
     .where("uid", "==", user.uid)
     .onSnapshot(snapshot => {
 
+      let hoje = new Date().toISOString().split("T")[0];
+
       let lista = document.getElementById("lista");
       lista.innerHTML = "";
 
       snapshot.forEach(doc => {
         let t = doc.data();
+
+        // 🔥 FILTRO INTELIGENTE
+        if (t.tipo === "normal" && t.data !== hoje) return;
 
         let li = document.createElement("li");
         li.style.background = "#F5F5DC";
@@ -133,6 +138,28 @@ function carregar() {
         li.style.justifyContent = "space-between";
         li.style.alignItems = "center";
 
+        let span = document.createElement("span");
+        span.textContent = t.texto;
+
+        // 🔵 se for diária
+        if (t.tipo === "diaria") {
+          span.textContent += " 🔁";
+        }
+
+        let botao = document.createElement("button");
+        botao.textContent = "🗑️";
+
+        botao.onclick = () => {
+          db.collection("tarefas").doc(doc.id).delete();
+        };
+
+        li.appendChild(span);
+        li.appendChild(botao);
+
+        lista.appendChild(li);
+      });
+    });
+}
         // TEXTO
         let span = document.createElement("span");
         span.textContent = t.texto;
@@ -157,6 +184,7 @@ function carregar() {
       });
     });
 }
+<button onclick="adicionar('diaria')">➕ Tarefa diária</button>
 </script>
 
 </body>
