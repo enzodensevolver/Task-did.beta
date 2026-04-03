@@ -80,8 +80,9 @@ function logout() {
 auth.onAuthStateChanged(u => {
   if (u) {
     user = u;
-    login.style.display = "none";
-    app.style.display = "block";
+    document.getElementById("login").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    
     carregar();
   } else {
     login.style.display = "block";
